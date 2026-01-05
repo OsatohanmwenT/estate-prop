@@ -1,7 +1,6 @@
 import invoiceService from "../services/invoice.service";
-import { emailTemplates } from "../utils/emailTemplates";
+import { emailService, emailTemplates } from "../email";
 import { logger } from "../utils/logger";
-import { sendBulkEmails } from "../utils/sendEmail";
 
 export interface RentRemindersResult {
   sevenDayReminders: number;
@@ -51,10 +50,12 @@ export async function sendRentDueReminders(): Promise<RentRemindersResult> {
     logger.info(`📧 ${sevenDayReminders.length} 7-day reminders to send`);
     logger.info(`📧 ${oneDayReminders.length} 1-day reminders to send`);
 
-    const emails = upcomingInvoices
+    // Prepare bulk email data
+    const recipients = upcomingInvoices
       .filter((invoice) => invoice.tenant_email)
-      .map((invoice) => {
-        const emailContent = emailTemplates.rentReminder({
+      .map((invoice) => ({
+        email: invoice.tenant_email!,
+        data: {
           tenantName: invoice.tenant_name || "Tenant",
           propertyAddress:
             invoice.property_address || invoice.property_name || "Property",
@@ -64,17 +65,11 @@ export async function sendRentDueReminders(): Promise<RentRemindersResult> {
             month: "long",
             day: "numeric",
           }),
-        });
+        },
+      }));
 
-        return {
-          to: invoice.tenant_email!,
-          subject: emailContent.subject,
-          html: emailContent.html,
-          text: emailContent.text,
-        };
-      });
-
-    const emailResult = await sendBulkEmails(emails, 10, 2000);
+    // Use new EmailService for bulk sending
+    const emailResult = await emailService.sendBulkRentReminders(recipients);
 
     result.emailsSent = emailResult.sent;
     result.emailsFailed = emailResult.failed;
@@ -82,12 +77,9 @@ export async function sendRentDueReminders(): Promise<RentRemindersResult> {
     logger.info(
       `✅ Rent reminders completed: ${emailResult.sent} sent, ${emailResult.failed} failed`
     );
-
-    if (emailResult.failedEmails.length > 0) {
-      logger.warn("Failed to send emails to:", emailResult.failedEmails);
-    }
-  } catch (error: any) {
-    throw new Error(`Failed to send rent due reminders: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to send rent due reminders: ${message}`);
   }
 
   return result;

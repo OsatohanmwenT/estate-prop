@@ -1,13 +1,14 @@
 "use client";
 
 import {
-  Bell,
   Briefcase,
+  Building2,
   ChevronRight,
   Home,
   LayoutDashboard,
   LogOut,
   Settings,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,6 +26,7 @@ import {
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { useAuth } from "~/contexts/AuthContext";
 import { cn } from "~/lib/utils";
+import { NotificationBell } from "./NotificationBell";
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -67,14 +69,7 @@ export function Header() {
         {/* Right: Tools & Profile */}
         <div className="flex items-center gap-3">
           {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative h-8 w-8 rounded-sm border border-transparent hover:border-slate-200 text-slate-400 hover:text-slate-900 transition-all"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-white" />
-          </Button>
+          <NotificationBell />
 
           {/* User Menu */}
           {isAuthenticated ? (
@@ -85,7 +80,7 @@ export function Header() {
                   className="relative h-8 rounded-sm pl-1 pr-3 gap-2 hover:bg-white border border-transparent hover:border-slate-200 transition-all ml-1"
                 >
                   <Avatar className="h-6 w-6 rounded-sm border border-slate-200">
-                    <AvatarImage src={user?.avatarUrl} />
+                    <AvatarImage />
                     <AvatarFallback className="bg-slate-100 text-slate-600 text-[10px] font-bold rounded-sm">
                       {user?.fullName?.charAt(0) || "U"}
                     </AvatarFallback>
@@ -114,31 +109,33 @@ export function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-slate-100" />
                 <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">
+                    Account
+                  </DropdownMenuLabel>
                   <DropdownMenuItem
                     asChild
                     className="focus:bg-slate-50 cursor-pointer"
                   >
-                    <Link href="/dashboard">
-                      <LayoutDashboard className="mr-2 h-4 w-4 text-slate-500" />
-                      <span className="text-slate-700">Dashboard</span>
+                    <Link href="/settings/account">
+                      <User className="mr-2 h-4 w-4 text-slate-500" />
+                      <span className="text-slate-700">Profile & Security</span>
                     </Link>
                   </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className="bg-slate-100" />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">
+                    Organization
+                  </DropdownMenuLabel>
                   <DropdownMenuItem
                     asChild
                     className="focus:bg-slate-50 cursor-pointer"
                   >
-                    <Link href="/properties">
-                      <Briefcase className="mr-2 h-4 w-4 text-slate-500" />
-                      <span className="text-slate-700">Properties</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    asChild
-                    className="focus:bg-slate-50 cursor-pointer"
-                  >
-                    <Link href="/settings">
-                      <Settings className="mr-2 h-4 w-4 text-slate-500" />
-                      <span className="text-slate-700">Settings</span>
+                    <Link href="/settings/organization">
+                      <Building2 className="mr-2 h-4 w-4 text-slate-500" />
+                      <span className="text-slate-700">
+                        Organization Settings
+                      </span>
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>

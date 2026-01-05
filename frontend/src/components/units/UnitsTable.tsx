@@ -296,10 +296,10 @@ const UnitsTable = () => {
                         {unit.tenant ? (
                           <div className="flex items-center gap-2">
                             <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">
-                              {unit.tenant.firstName?.charAt(0) || "T"}
+                              {unit.tenant.fullName?.charAt(0) || "T"}
                             </div>
                             <span className="text-sm font-medium text-slate-700">
-                              {unit.tenant.firstName} {unit.tenant.lastName}
+                              {unit.tenant.fullName}
                             </span>
                           </div>
                         ) : (

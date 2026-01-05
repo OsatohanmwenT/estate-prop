@@ -1,17 +1,16 @@
-import { sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import {
-  pgTable,
-  timestamp,
   decimal,
-  text,
-  uuid,
   index,
   pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
 } from "drizzle-orm/pg-core";
-import { tenants, organizations, users } from "./user";
 import { leases } from "./lease";
-import { varchar } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { organizations, tenants, users } from "./user";
 
 // ------------------------------------------
 // Financial Enums

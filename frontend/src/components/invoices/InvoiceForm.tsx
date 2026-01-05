@@ -55,49 +55,37 @@ export function InvoiceForm({
 }: InvoiceFormProps) {
   const form = useForm<CreateInvoiceFormData>({
     resolver: zodResolver(createInvoiceSchema) as any,
-    defaultValues: initialData
-      ? {
-          tenantId: initialData.tenantId,
-          leaseId: initialData.leaseId || undefined,
-          type: initialData.type,
-          description: initialData.description,
-          amount: Number(initialData.amount),
-          dueDate: initialData.dueDate,
-          status: initialData.status,
-          ownerAmount: initialData.ownerAmount
+    defaultValues:{
+          tenantId: initialData?.tenantId,
+          leaseId: initialData?.leaseId || undefined,
+          type: initialData?.type || "rent",
+          description: initialData?.description || "",
+          amount: Number(initialData?.amount),
+          dueDate: initialData?.dueDate || format(new Date(), "yyyy-MM-dd"),
+          status: initialData?.status || "draft",
+          ownerAmount: initialData?.ownerAmount
             ? Number(initialData.ownerAmount)
-            : undefined,
-          managementFee: initialData.managementFee
+            : 0,
+          managementFee: initialData?.managementFee
             ? Number(initialData.managementFee)
-            : undefined,
+            : 0,
         }
-      : {
-          tenantId: "",
-          type: "rent",
-          description: "",
-          amount: 0,
-          dueDate: format(new Date(), "yyyy-MM-dd"),
-          status: "draft",
-        },
   });
 
   const selectedTenantId = form.watch("tenantId");
 
-  // Filter leases based on selected tenant
   const filteredLeases = leases.filter(
     (lease: any) => lease.tenantId === selectedTenantId
   );
 
-  // Reset lease selection when tenant changes
   useEffect(() => {
-    if (initialData) return; // Don't reset when editing
+    if (initialData) return;
     form.setValue("leaseId", undefined);
   }, [selectedTenantId, form, initialData]);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Tenant Selection */}
         <Field>
           <FieldLabel>Tenant *</FieldLabel>
           <Controller
@@ -162,7 +150,6 @@ export function InvoiceForm({
           )}
         </Field>
 
-        {/* Invoice Type */}
         <Field>
           <FieldLabel>Invoice Type *</FieldLabel>
           <Controller
@@ -192,7 +179,6 @@ export function InvoiceForm({
           )}
         </Field>
 
-        {/* Status */}
         <Field>
           <FieldLabel>Status *</FieldLabel>
           <Controller
@@ -222,7 +208,6 @@ export function InvoiceForm({
           )}
         </Field>
 
-        {/* Amount */}
         <Field>
           <FieldLabel>Amount *</FieldLabel>
           <Input
@@ -238,7 +223,6 @@ export function InvoiceForm({
           )}
         </Field>
 
-        {/* Due Date */}
         <Field>
           <FieldLabel>Due Date *</FieldLabel>
           <Controller
@@ -261,7 +245,6 @@ export function InvoiceForm({
         </Field>
       </div>
 
-      {/* Description */}
       <Field>
         <FieldLabel>Description *</FieldLabel>
         <Textarea
@@ -320,7 +303,6 @@ export function InvoiceForm({
         </Field>
       </div>
 
-      {/* Submit Button */}
       <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
         <Button
           type="submit"

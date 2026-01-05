@@ -5,14 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
 import { Badge } from "~/components/ui/badge";
-import { cn } from "~/lib/utils";
+import { cn, formatCurrency } from "~/lib/utils";
 import { Property } from "~/types/property";
 
 interface PropertyCardProps {
   property: Property;
 }
 
-export const PropertyCard = memo(function PropertyCard({ property }: PropertyCardProps) {
+export const PropertyCard = memo(function PropertyCard({
+  property,
+}: PropertyCardProps) {
   const isOccupied = property.status === "occupied";
 
   const statusColors = isOccupied
@@ -81,7 +83,7 @@ export const PropertyCard = memo(function PropertyCard({ property }: PropertyCar
           </div>
 
           {/* Bottom Row: Stats grid */}
-          <div className="grid grid-cols-3 gap-4 mt-auto pt-2 border-t border-slate-50">
+          <div className="grid grid-cols-4 gap-3 mt-auto pt-2 border-t border-slate-50">
             <div className="flex flex-col gap-0.5">
               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                 Units
@@ -109,6 +111,14 @@ export const PropertyCard = memo(function PropertyCard({ property }: PropertyCar
               </span>
               <span className="text-xs font-medium capitalize truncate text-slate-700">
                 {property.category}
+              </span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                Revenue
+              </span>
+              <span className="text-xs font-mono font-bold text-emerald-600">
+                {formatCurrency(parseFloat(property.totalRevenue || "0"))}
               </span>
             </div>
           </div>

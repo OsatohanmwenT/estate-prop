@@ -40,6 +40,7 @@ export interface Property {
   vacantUnits: number;
   status: "vacant" | "occupied";
   occupancyRate: number;
+  totalRevenue: string;
   amenities?: string[];
   description?: string;
   createdAt: string;

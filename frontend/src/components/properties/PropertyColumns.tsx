@@ -157,18 +157,18 @@ export const propertyColumns: ColumnDef<Property>[] = [
     enableSorting: true,
   },
   {
-    id: "balance",
-    header: "Balance",
+    id: "revenue",
+    header: "Revenue",
     cell: ({ row }) => {
       const property = row.original;
-      const balance = (property.unitCount || 0) * 1000;
+      const revenue = parseFloat(property.totalRevenue || "0");
       return (
         <span className="text-sm font-mono text-slate-900">
-          {formatCurrency(balance)}
+          {formatCurrency(revenue)}
         </span>
       );
     },
-    enableSorting: false,
+    enableSorting: true,
   },
   {
     id: "actions",

@@ -18,8 +18,10 @@ import {
 interface FileUploaderProps extends FieldValues {
   value?: string;
   onChange?: (value: string) => void;
-  onComplete?: (file: { url: string; fileId?: string }) => void;
+  onComplete?: (file: { url: string; fileId?: string, size: number }) => void;
   resetAfterUpload?: boolean;
+  acceptedFileTypes?: "image" | "document" | "all"; // New prop to control file types
+  maxFileSize?: number; // in MB, default 5MB
 }
 
 interface UploaderState {
@@ -31,14 +33,23 @@ interface UploaderState {
   isDeleting: boolean;
   error: boolean;
   objectUrl?: string;
-  fileType: "image" | "video";
+  fileType: "image" | "video" | "document";
 }
+
+// Helper function to determine file type
+const getFileType = (file: File): "image" | "video" | "document" => {
+  if (file.type.startsWith("image/")) return "image";
+  if (file.type.startsWith("video/")) return "video";
+  return "document";
+};
 
 const FileUploader: React.FC<FileUploaderProps> = ({
   value,
   onChange,
   onComplete,
   resetAfterUpload = false,
+  acceptedFileTypes = "all",
+  maxFileSize = 5, // Default 5MB
 }) => {
   const [fileState, setFileState] = useState<UploaderState>({
     error: false,
@@ -63,11 +74,11 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       // Prepare form data for backend upload
       const formData = new FormData();
       formData.append("file", file);
-
+      
       // Upload through backend proxy
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-
+        
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
             const percentageCompleted = (event.loaded / event.total) * 100;
@@ -77,7 +88,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
             }));
           }
         };
-
+        
         xhr.onload = () => {
           if (xhr.status === 200) {
             const response = JSON.parse(xhr.responseText);
@@ -89,8 +100,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
             }));
             toast.success("File uploaded successfully");
             onChange?.(response.url);
-            onComplete?.({ url: response.url, fileId: response.fileId });
-
+            onComplete?.({ url: response.url, fileId: response.fileId, size: file.size });
+            
             // Reset uploader if configured for multiple uploads
             if (resetAfterUpload) {
               setTimeout(() => {
@@ -106,6 +117,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
                 });
               }, 500);
             }
+            console.log("Uploading file:", file);
 
             resolve();
           } else {
@@ -125,7 +137,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         xhr.send(formData);
       });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       console.error("Upload error:", errorMessage);
@@ -143,20 +155,27 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
         const file = acceptedFiles[0];
+        const detectedFileType = getFileType(file);
 
         if (fileState.objectUrl && !fileState.objectUrl.startsWith("http")) {
           URL.revokeObjectURL(fileState.objectUrl);
         }
 
+        // Create object URL only for images and videos
+        const objectUrl =
+          detectedFileType === "image" || detectedFileType === "video"
+            ? URL.createObjectURL(file)
+            : undefined;
+
         setFileState({
           file: file,
           uploading: false,
           progress: 0,
-          objectUrl: URL.createObjectURL(file),
+          objectUrl: objectUrl,
           error: false,
           id: uuidv4(),
           isDeleting: false,
-          fileType: "image",
+          fileType: detectedFileType,
         });
         uploadFile(file);
       }
@@ -231,12 +250,20 @@ const FileUploader: React.FC<FileUploaderProps> = ({
         (rejection) => rejection.errors[0].code === "file-too-large"
       );
 
+      const fileTypeInvalid = fileRejection.find(
+        (rejection) => rejection.errors[0].code === "file-invalid-type"
+      );
+
       if (fileSizeToBig) {
-        toast.error("File is too large, max size is 5MB");
+        toast.error(`File is too large, max size is ${maxFileSize}MB`);
       }
 
       if (tooManyFiles) {
         toast.error("Too many files selected, max is 1");
+      }
+
+      if (fileTypeInvalid) {
+        toast.error("Invalid file type");
       }
     }
   }
@@ -270,17 +297,24 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       );
     }
 
-    if (fileState.objectUrl) {
+    if (fileState.objectUrl || fileState.file) {
       return (
         <RenderUploadedState
-          previewUrl={fileState.objectUrl}
+          previewUrl={fileState.objectUrl || ""}
           isDeleting={fileState.isDeleting}
           handleRemoveFile={handleRemoveFile}
+          file={fileState.file}
+          fileType={fileState.fileType}
         />
       );
     }
 
-    return <RenderEmptyState isDragActive={isDragActive} />;
+    return (
+      <RenderEmptyState
+        isDragActive={isDragActive}
+        acceptedFileTypes={acceptedFileTypes}
+      />
+    );
   }
 
   useEffect(() => {
@@ -291,16 +325,54 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     };
   }, [fileState.objectUrl]);
 
+  // Define accepted file types based on prop
+  const getAcceptedTypes = (): Record<string, string[]> => {
+    if (acceptedFileTypes === "image") {
+      return { "image/*": [] };
+    }
+
+    if (acceptedFileTypes === "document") {
+      return {
+        "application/pdf": [".pdf"],
+        "application/msword": [".doc"],
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+          [".docx"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+          ".xlsx",
+        ],
+        "text/plain": [".txt"],
+        "text/csv": [".csv"],
+      };
+    }
+
+    // "all" - both images and documents
+    return {
+      "image/*": [],
+      "application/pdf": [".pdf"],
+      "application/msword": [".doc"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        [".docx"],
+      "application/vnd.ms-excel": [".xls"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+        ".xlsx",
+      ],
+      "text/plain": [".txt"],
+      "text/csv": [".csv"],
+    };
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/*": [] },
+    accept: getAcceptedTypes(),
     maxFiles: 1,
     multiple: false,
-    maxSize: 5 * 1024 * 1024,
+    maxSize: maxFileSize * 1024 * 1024, // Convert MB to bytes
     onDropRejected: rejectedFiles,
     disabled:
       fileState.uploading ||
-      (!!fileState.objectUrl && !fileState.error && !resetAfterUpload),
+      (!!fileState.objectUrl && !fileState.error && !resetAfterUpload) ||
+      (!!fileState.file && !fileState.error && !resetAfterUpload),
   });
 
   return (

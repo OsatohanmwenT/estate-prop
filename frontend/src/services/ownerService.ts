@@ -1,10 +1,11 @@
-import { BaseService } from "./baseService";
 import {
-  Owner,
   CreateOwnerData,
-  UpdateOwnerData,
   GetAllOwnersResponse,
+  Owner,
+  OwnerWithDetails,
+  UpdateOwnerData,
 } from "~/types/tenant";
+import { BaseService } from "./baseService";
 
 class OwnerService extends BaseService {
   constructor() {
@@ -32,6 +33,13 @@ class OwnerService extends BaseService {
    */
   async getOwnerById(id: string): Promise<Owner> {
     return this.get<Owner>(`/${id}`);
+  }
+
+  /**
+   * Get owner with detailed statistics and properties
+   */
+  async getOwnerWithDetails(id: string): Promise<OwnerWithDetails> {
+    return this.get<OwnerWithDetails>(`/${id}?details=true`);
   }
 
   /**

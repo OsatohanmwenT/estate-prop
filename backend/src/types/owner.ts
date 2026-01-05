@@ -3,6 +3,9 @@ export interface CreateOwnerData {
   email: string;
   phone: string;
   address: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
   organizationId: string;
   managedBy?: string;
 }
@@ -12,5 +15,8 @@ export interface UpdateOwnerData {
   email?: string;
   phone?: string;
   address?: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
   managedBy?: string | null;
 }

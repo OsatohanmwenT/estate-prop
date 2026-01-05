@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +12,6 @@ import {
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
 import { useDeleteProperty } from "~/lib/query";
-import { toast } from "sonner";
 
 interface DeletePropertyDialogProps {
   propertyId: string;

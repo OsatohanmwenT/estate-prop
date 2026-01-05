@@ -1,15 +1,15 @@
+import { relations } from "drizzle-orm";
 import {
+  foreignKey,
+  index,
+  integer,
   pgTable,
   text,
-  uuid,
-  integer,
   timestamp,
-  foreignKey,
+  uuid,
 } from "drizzle-orm/pg-core";
-import { organizations, users } from "./user";
-import { index } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { properties } from ".";
+import { organizations, owners, users } from "./user";
 
 export const folders = pgTable(
   "folders",
@@ -50,23 +50,28 @@ export const documents = pgTable(
     propertyId: uuid("property_id").references(() => properties.id, {
       onDelete: "cascade",
     }),
+    ownerId: uuid("owner_id").references(() => owners.id, {
+      onDelete: "cascade",
+    }),
     fileName: text("file_name").notNull(),
     fileUrl: text("file_url").notNull(),
     fileType: text("file_type").notNull(),
     fileSize: integer("file_size"),
-
+    description: text("description"),
     category: text("category").notNull(),
-
+    tags: text("tags").array(),
     uploadedBy: uuid("uploaded_by").references(() => users.id, {
       onDelete: "set null",
     }),
-
     uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
     index("idx_documents_org").on(table.organizationId),
     index("idx_documents_folder").on(table.folderId),
     index("idx_documents_property").on(table.propertyId),
+    index("idx_documents_owner").on(table.ownerId),
+    index("idx_documents_category").on(table.category),
   ]
 );
 

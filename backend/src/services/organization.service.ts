@@ -1,10 +1,18 @@
+import { eq, and } from "drizzle-orm";
 import { db } from "../database";
-import { organizations, members } from "../database/schemas";
-import { eq } from "drizzle-orm";
+import { members, organizations, users } from "../database/schemas";
 
 export interface CreateOrganizationData {
   name: string;
   userId: string;
+}
+
+export interface UpdateOrganizationData {
+  name?: string;
+  logoUrl?: string;
+  address?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 }
 
 class OrganizationService {
@@ -62,6 +70,108 @@ class OrganizationService {
       .limit(1);
 
     return membership || null;
+  }
+
+  async updateOrganization(orgId: string, data: UpdateOrganizationData) {
+    const [updated] = await db
+      .update(organizations)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(organizations.id, orgId))
+      .returning();
+
+    return updated;
+  }
+
+  async getMembers(orgId: string) {
+    const memberList = await db
+      .select({
+        id: members.id,
+        userId: members.userId,
+        role: members.role,
+        status: members.status,
+        joinedAt: members.joinedAt,
+        user: {
+          id: users.id,
+          fullName: users.fullName,
+          email: users.email,
+          imageUrl: users.imageUrl,
+        },
+      })
+      .from(members)
+      .innerJoin(users, eq(members.userId, users.id))
+      .where(eq(members.organizationId, orgId));
+
+    return memberList;
+  }
+
+  async inviteMember(
+    orgId: string,
+    email: string,
+    role: string,
+    invitedBy: string
+  ) {
+    // Check if user exists
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    if (!existingUser) {
+      throw new Error("User with this email does not exist");
+    }
+
+    // Check if already a member
+    const [existingMember] = await db
+      .select()
+      .from(members)
+      .where(
+        and(
+          eq(members.organizationId, orgId),
+          eq(members.userId, existingUser.id)
+        )
+      )
+      .limit(1);
+
+    if (existingMember) {
+      throw new Error("User is already a member of this organization");
+    }
+
+    const [newMember] = await db
+      .insert(members)
+      .values({
+        organizationId: orgId,
+        userId: existingUser.id,
+        role: role as any,
+        status: "invited",
+        invitedBy,
+        invitedAt: new Date(),
+      })
+      .returning();
+
+    return newMember;
+  }
+
+  async updateMemberRole(memberId: string, role: string) {
+    const [updated] = await db
+      .update(members)
+      .set({ role: role as any })
+      .where(eq(members.id, memberId))
+      .returning();
+
+    return updated;
+  }
+
+  async removeMember(memberId: string) {
+    const [removed] = await db
+      .delete(members)
+      .where(eq(members.id, memberId))
+      .returning();
+
+    return removed;
   }
 }
 

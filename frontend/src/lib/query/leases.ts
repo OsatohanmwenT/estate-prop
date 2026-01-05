@@ -7,20 +7,10 @@ import {
   TerminateLeaseData,
   UpdateLeaseData
 } from "~/types/lease";
+import { leaseKeys } from "./keys";
 
 // Query Keys
-export const leaseKeys = {
-  all: ["leases"] as const,
-  lists: () => [...leaseKeys.all, "list"] as const,
-  list: (params: LeaseQueryParams) => [...leaseKeys.lists(), params] as const,
-  details: () => [...leaseKeys.all, "detail"] as const,
-  detail: (id: string) => [...leaseKeys.details(), id] as const,
-  byTenant: (tenantId: string) =>
-    [...leaseKeys.all, "tenant", tenantId] as const,
-  byUnit: (unitId: string) => [...leaseKeys.all, "unit", unitId] as const,
-  statistics: () => [...leaseKeys.all, "statistics"] as const,
-  expiring: (days: number) => [...leaseKeys.all, "expiring", days] as const,
-};
+
 
 // ============ LEASE QUERIES ============
 

@@ -30,6 +30,7 @@ export interface OverdueRentItem {
   dueDate: string;
   daysOverdue: number;
   phoneNumber: string;
+  email?: string;
 }
 
 export interface UpcomingLeaseItem {
@@ -52,6 +53,26 @@ export interface PendingPaymentItem {
   tenantPhone: string;
   propertyUnit: string;
   note: string | null;
+}
+
+export interface VacantUnit {
+  id: string;
+  name: string;
+  type: string;
+  rentAmount: string;
+  bedrooms: number;
+  bathrooms: number;
+  property: {
+    id: string;
+    name: string;
+    address: string;
+  };
+}
+
+export interface RevenueProjection {
+  month: string;
+  secured: number;
+  potential: number;
 }
 
 export interface OccupancyStats {

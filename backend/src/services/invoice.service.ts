@@ -16,6 +16,47 @@ import {
 
 class InvoiceService {
   async createInvoice(data: CreateInvoiceData) {
+    let ownerAmount = data.ownerAmount;
+    let managementFee = data.managementFee;
+
+    // Auto-calculate management fee split if not provided and lease exists
+    if ((!ownerAmount || !managementFee) && data.leaseId) {
+      const [lease] = await db
+        .select({
+          unitId: leases.unitId,
+        })
+        .from(leases)
+        .where(eq(leases.id, data.leaseId))
+        .limit(1);
+
+      if (lease) {
+        const [unit] = await db
+          .select({
+            managementFeePercentage: propertyUnits.managementFeePercentage,
+            managementFeeFixed: propertyUnits.managementFeeFixed,
+          })
+          .from(propertyUnits)
+          .where(eq(propertyUnits.id, lease.unitId))
+          .limit(1);
+
+        if (unit) {
+          const amount = data.amount;
+          const feePercentage = parseFloat(unit.managementFeePercentage || "0");
+          const feeFixed = parseFloat(unit.managementFeeFixed || "0");
+
+          let calculatedFee = 0;
+          if (feePercentage > 0) {
+            calculatedFee = (amount * feePercentage) / 100;
+          } else if (feeFixed > 0) {
+            calculatedFee = feeFixed;
+          }
+
+          managementFee = managementFee || calculatedFee;
+          ownerAmount = ownerAmount || amount - calculatedFee;
+        }
+      }
+    }
+
     const [invoice] = await db
       .insert(invoices)
       .values({
@@ -26,8 +67,8 @@ class InvoiceService {
         description: data.description,
         amount: data.amount.toString(),
         amountPaid: "0",
-        ownerAmount: data.ownerAmount?.toString(),
-        managementFee: data.managementFee?.toString(),
+        ownerAmount: ownerAmount?.toString(),
+        managementFee: managementFee?.toString(),
         dueDate: data.dueDate,
         status: data.status || "pending",
         createdAt: new Date(),
@@ -195,6 +236,26 @@ class InvoiceService {
       .offset(offset)
       .orderBy(sql`${invoices.dueDate} DESC`);
 
+    // Fetch transactions for all invoices
+    if (results.length > 0) {
+      const invoiceIds = results.map((invoice) => invoice.id);
+      const allTransactions = await db
+        .select()
+        .from(transactions)
+        .where(
+          sql`${transactions.invoiceId} IN (${sql.raw(
+            invoiceIds.map((id) => `'${id}'`).join(",")
+          )})`
+        )
+        .orderBy(sql`${transactions.paidAt} DESC`);
+
+      // Map transactions to their invoices
+      return results.map((invoice) => ({
+        ...invoice,
+        transactions: allTransactions.filter((t) => t.invoiceId === invoice.id),
+      }));
+    }
+
     return results;
   }
 
@@ -337,6 +398,26 @@ class InvoiceService {
         }
       }
 
+      // Create in-app notification for payment received
+      try {
+        const { notificationService } = require("./notification.service");
+        await notificationService.createInApp({
+          organizationId: invoice.organizationId,
+          type: "payment_received",
+          subject: "Payment Received",
+          message: `Payment of ₦${paymentAmount.toLocaleString()} received`,
+          metadata: {
+            invoiceId,
+            amount: paymentAmount,
+            method: data.method,
+            transactionId: transaction.id,
+          },
+        });
+      } catch (e) {
+        // Don't fail the transaction if notification fails
+        console.error("Failed to create payment notification:", e);
+      }
+
       return { invoice: updatedInvoice, transaction };
     });
   }
@@ -399,6 +480,26 @@ class InvoiceService {
       .where(and(eq(invoices.status, "pending"), lte(invoices.dueDate, now)))
       .returning();
 
+    // Create notifications for newly overdue invoices
+    if (overdueInvoices.length > 0) {
+      try {
+        const { notificationService } = require("./notification.service");
+        for (const inv of overdueInvoices) {
+          await notificationService.createInApp({
+            organizationId: inv.organizationId,
+            type: "invoice_overdue",
+            subject: "Invoice Overdue",
+            message: `Invoice for ₦${parseFloat(
+              inv.amount
+            ).toLocaleString()} is now overdue`,
+            metadata: { invoiceId: inv.id, amount: inv.amount },
+          });
+        }
+      } catch (e) {
+        console.error("Failed to create overdue notifications:", e);
+      }
+    }
+
     return overdueInvoices;
   }
 
@@ -451,6 +552,49 @@ class InvoiceService {
       throw new Error("Lease not found or not active");
     }
 
+    // Calculate how many billing cycles have passed since lease start
+    const now = new Date();
+    const leaseStart = new Date(lease.startDate);
+    const monthsPassed =
+      (now.getFullYear() - leaseStart.getFullYear()) * 12 +
+      (now.getMonth() - leaseStart.getMonth());
+
+    let cyclesPassed = 0;
+    switch (lease.billingCycle) {
+      case "monthly":
+        cyclesPassed = monthsPassed;
+        break;
+      case "quarterly":
+        cyclesPassed = Math.floor(monthsPassed / 3);
+        break;
+      case "biannually":
+        cyclesPassed = Math.floor(monthsPassed / 6);
+        break;
+      case "annually":
+        cyclesPassed = Math.floor(monthsPassed / 12);
+        break;
+    }
+
+    // Calculate expected amount that should have been paid by now
+    const rentAmount = parseFloat(lease.rentAmount);
+    const expectedPaid = rentAmount * Math.max(1, cyclesPassed);
+
+    // Get total amount already paid for this lease (excluding fees)
+    const [paymentStats] = await db
+      .select({
+        totalPaid: sql<string>`COALESCE(SUM(${invoices.amountPaid}), 0)`,
+        totalOwed: sql<string>`COALESCE(SUM(${invoices.amount}), 0)`,
+      })
+      .from(invoices)
+      .where(and(eq(invoices.leaseId, leaseId), eq(invoices.type, "rent")));
+
+    const totalPaid = parseFloat(paymentStats?.totalPaid || "0");
+
+    // If tenant has already paid enough to cover this period, skip invoice generation
+    if (totalPaid >= expectedPaid) {
+      return null; // Already covered by prepayment
+    }
+
     const [lastInvoice] = await db
       .select()
       .from(invoices)
@@ -496,6 +640,33 @@ class InvoiceService {
       return null;
     }
 
+    // Get unit details to calculate management fee split
+    const [unit] = await db
+      .select({
+        managementFeePercentage: propertyUnits.managementFeePercentage,
+        managementFeeFixed: propertyUnits.managementFeeFixed,
+      })
+      .from(propertyUnits)
+      .where(eq(propertyUnits.id, lease.unitId))
+      .limit(1);
+
+    // Calculate management fee and owner amount
+    let managementFee = 0;
+
+    if (unit) {
+      const feePercentage = parseFloat(unit.managementFeePercentage || "0");
+      const feeFixed = parseFloat(unit.managementFeeFixed || "0");
+
+      // Use percentage if set, otherwise use fixed amount
+      if (feePercentage > 0) {
+        managementFee = (rentAmount * feePercentage) / 100;
+      } else if (feeFixed > 0) {
+        managementFee = feeFixed;
+      }
+    }
+
+    const ownerAmount = rentAmount - managementFee;
+
     const [newInvoice] = await db
       .insert(invoices)
       .values({
@@ -505,6 +676,8 @@ class InvoiceService {
         type: "rent",
         description: `Recurring ${lease.billingCycle} rent payment`,
         amount: lease.rentAmount,
+        ownerAmount: ownerAmount.toFixed(2),
+        managementFee: managementFee.toFixed(2),
         dueDate: nextDueDate,
         status: "pending",
         createdAt: new Date(),

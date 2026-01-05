@@ -123,3 +123,19 @@ export const getUpcomingLeaseItems = asyncHandler(
     });
   }
 );
+
+/**
+ * @route GET /api/v1/dashboard/revenue-projections
+ * @desc Get revenue projections for the next 6 months
+ * @access Protected
+ */
+export const getRevenueProjections = asyncHandler(
+  async (req: Request, res: Response) => {
+    const projections = await dashboardService.getRevenueProjections();
+
+    res.status(200).json({
+      success: true,
+      data: projections,
+    });
+  }
+);

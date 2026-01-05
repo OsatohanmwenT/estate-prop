@@ -73,7 +73,7 @@ export function UnitHeader({ unit, propertyId }: UnitHeaderProps) {
           </Link>
         </div>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-foreground">{unit.name}</h1>
+          <h1 className="text-2xl font-bold text-foreground">{unit.code}</h1>
           <Badge
             variant="outline"
             className={`${getStatusColor(unit.status)} font-normal px-2.5 py-0.5`}

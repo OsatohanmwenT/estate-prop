@@ -9,6 +9,9 @@ export interface Owner {
   email: string;
   phone: string;
   address: string;
+  bankName?: string | null;
+  accountNumber?: string | null;
+  accountName?: string | null;
   managedBy?: string | null;
   createdAt: string;
 }
@@ -18,6 +21,9 @@ export interface CreateOwnerData {
   email: string;
   phone: string;
   address: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
   organizationId?: string;
   managedBy?: string;
 }
@@ -27,7 +33,29 @@ export interface UpdateOwnerData {
   email?: string;
   phone?: string;
   address?: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
   managedBy?: string | null;
+}
+
+export interface OwnerProperty {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  category: string;
+  createdAt: string;
+}
+
+export interface OwnerWithDetails extends Owner {
+  propertiesCount: number;
+  unitsCount: number;
+  totalRevenue: string;
+  managementFeeTotal?: string;
+  ownerShareTotal?: string;
+  properties: OwnerProperty[];
 }
 
 // Tenant types
@@ -74,7 +102,7 @@ export interface TenantWithDetails extends Tenant {
   depositAmount?: string;
 }
 
-export interface TenantProfile extends Tenant {
+export interface TenantProfile extends Omit<Tenant, "metadata"> {
   metadata: TenantMetadata | null;
   currentLease?: {
     id: number;

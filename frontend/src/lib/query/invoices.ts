@@ -5,22 +5,7 @@ import {
   RecordPaymentData,
   UpdateInvoiceData,
 } from "~/types/invoice";
-
-// Query Keys
-export const invoiceKeys = {
-  all: ["invoices"] as const,
-  lists: () => [...invoiceKeys.all, "list"] as const,
-  list: (filters?: Record<string, any>) =>
-    [...invoiceKeys.lists(), filters] as const,
-  details: () => [...invoiceKeys.all, "detail"] as const,
-  detail: (id: string) => [...invoiceKeys.details(), id] as const,
-  byLease: (leaseId: string) => [...invoiceKeys.all, "lease", leaseId] as const,
-  overdue: () => [...invoiceKeys.all, "overdue"] as const,
-  upcoming: (days?: number) => [...invoiceKeys.all, "upcoming", days] as const,
-  statistics: () => [...invoiceKeys.all, "statistics"] as const,
-};
-
-// ============ INVOICE QUERIES ============
+import { invoiceKeys } from "./keys";
 
 /**
  * Fetch all invoices with optional filters

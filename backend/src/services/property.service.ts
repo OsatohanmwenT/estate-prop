@@ -54,7 +54,6 @@ class PropertyService {
       conditions.push(eq(properties.ownerId, ownerId));
     }
 
-    // Build the query with aggregations for unit statistics
     const query = db
       .select({
         id: properties.id,
@@ -64,25 +63,29 @@ class PropertyService {
         city: properties.city,
         state: properties.state,
         totalUnits: properties.totalUnits,
-        // Count total units
         unitCount: sql<number>`(
           SELECT COUNT(*)::int 
           FROM property_units 
           WHERE property_units.property_id = properties.id
         )`,
-        // Count occupied units
         occupiedUnits: sql<number>`(
           SELECT COUNT(*)::int 
           FROM property_units 
           WHERE property_units.property_id = properties.id
           AND property_units.status = 'occupied'
         )`,
-        // Count vacant units
         vacantUnits: sql<number>`(
           SELECT COUNT(*)::int 
           FROM property_units 
           WHERE property_units.property_id = properties.id
           AND property_units.status = 'vacant'
+        )`,
+        totalRevenue: sql<string>`(
+          SELECT COALESCE(SUM(invoices.amount_paid), 0)::text
+          FROM invoices
+          INNER JOIN leases ON invoices.lease_id = leases.id
+          INNER JOIN property_units ON leases.unit_id = property_units.id
+          WHERE property_units.property_id = properties.id
         )`,
       })
       .from(properties);
@@ -134,6 +137,8 @@ class PropertyService {
         propertyImagesList.find((img) => img.isPrimary)?.imageUrl ||
         propertyImagesList[0]?.imageUrl ||
         null;
+
+      console.log(property);
 
       return {
         ...property,

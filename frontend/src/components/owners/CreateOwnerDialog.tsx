@@ -109,8 +109,6 @@ export function CreateOwnerDialog({
       email: formData.email.trim().toLowerCase(),
       phone: formData.phone.trim(),
       address: formData.address.trim(),
-      organizationId: user.organizationId,
-      managedBy: user?.id,
     });
   };
 

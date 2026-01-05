@@ -1,13 +1,13 @@
 import { serve } from "@upstash/workflow/express";
+import { Request, Response } from "express";
 import { config } from "../config";
+import { generateRecurringInvoices } from "../jobs/generateRecurringInvoices";
+import { sendOverdueReminders } from "../jobs/sendOverdueReminders";
+import { sendRentDueReminders } from "../jobs/sendRentDueReminders";
+import { updateExpiredLeases } from "../jobs/updateExpiredLeases";
+import { updateOverdueInvoices } from "../jobs/updateOverdueInvoices";
 import { asyncHandler } from "../utils/asyncHandler";
 import { qstash } from "../utils/lib";
-import { Request, Response } from "express";
-import { generateRecurringInvoices } from "../jobs/generateRecurringInvoices";
-import { updateOverdueInvoices } from "../jobs/updateOverdueInvoices";
-import { updateExpiredLeases } from "../jobs/updateExpiredLeases";
-import { sendRentDueReminders } from "../jobs/sendRentDueReminders";
-import { sendOverdueReminders } from "../jobs/sendOverdueReminders";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -20,11 +20,12 @@ export const runScheduledJobs = asyncHandler(
     );
 
     if (dailyJobSchedule) {
-      res.json({
+      return res.json({
         success: true,
         message: "Daily schedule already exists",
         scheduleId: dailyJobSchedule.scheduleId,
         cron: dailyJobSchedule.cron,
+        nextRun: "Every day at 2:00 AM UTC",
       });
     }
 
@@ -39,8 +40,15 @@ export const runScheduledJobs = asyncHandler(
       success: true,
       message: "Daily schedule created successfully!",
       scheduleId: schedule.scheduleId,
-      cron: "* * * * *",
+      cron: "0 2 * * *",
       nextRun: "Every day at 2:00 AM UTC",
+      jobs: [
+        "Generate recurring invoices (with prepayment detection)",
+        "Update overdue invoices",
+        "Update expired leases",
+        "Send rent due reminders",
+        "Send overdue reminders",
+      ],
     });
   }
 );

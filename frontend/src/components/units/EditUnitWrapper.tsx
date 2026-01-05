@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
 import { SingleUnitForm } from "~/components/units/SingleUnitForm";
 import { unitService } from "~/services";
 import { useUnitFormStore } from "~/stores/useUnitFormStore";
@@ -62,33 +61,35 @@ export function EditUnitWrapper({ unit, propertyId }: EditUnitWrapperProps) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <Card className="p-6">
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold">Edit Unit Details</h2>
-          <p className="text-sm text-muted-foreground">
-            Update the information for this unit.
-          </p>
-        </div>
+    <div className="space-y-6">
+      <div className="mb-6 border-b border-slate-100 pb-4">
+        <h2 className="text-lg font-semibold text-slate-900 tracking-tight">
+          Edit Unit Details
+        </h2>
+        <p className="text-sm text-slate-500 mt-1">
+          Update the information for this unit.
+        </p>
+      </div>
 
-        <SingleUnitForm />
+      <SingleUnitForm />
 
-        <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={updateUnitMutation.isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={updateUnitMutation.isPending}
-          >
-            {updateUnitMutation.isPending ? "Updating..." : "Save Changes"}
-          </Button>
-        </div>
-      </Card>
+      <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100">
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          disabled={updateUnitMutation.isPending}
+          className="rounded-sm border-slate-200"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={updateUnitMutation.isPending}
+          className="rounded-sm bg-slate-900 text-white hover:bg-slate-800 min-w-[140px]"
+        >
+          {updateUnitMutation.isPending ? "Updating..." : "Save Changes"}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -1,11 +1,10 @@
 "use client";
 
 import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import MaxContainer from "~/components/shared/MaxContainer";
 import { EditTenantForm } from "~/components/tenants/form/EditTenantForm";
+import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import { useDeleteTenant, useTenantById, useUpdateTenant } from "~/lib/query";
 import { UpdateTenantFormData } from "~/schemas/tenant";
@@ -80,76 +79,82 @@ export default function EditTenantPage() {
 
   if (isLoadingTenant) {
     return (
-      <MaxContainer>
-        <div className="space-y-6">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-12 w-full" />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Skeleton className="h-64 w-full" />
+      <div className="min-h-screen bg-slate-50/30 font-sans">
+        <div className="bg-white border-b border-slate-200 px-6 py-4">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-8 w-8 rounded-sm" />
+              <div>
+                <Skeleton className="h-6 w-32 mb-1" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-5xl mx-auto py-8 px-6">
+          <div className="bg-white rounded-sm border border-slate-200 shadow-sm p-6 space-y-4">
+            <Skeleton className="h-12 w-full" />
             <Skeleton className="h-64 w-full" />
           </div>
         </div>
-      </MaxContainer>
+      </div>
     );
   }
 
   if (!tenant) {
     return (
-      <MaxContainer>
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-foreground mb-2">
-            Tenant not found
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            The tenant you&apos;re looking for doesn&apos;t exist or has been
-            removed.
-          </p>
-          <Link href="/people" className="text-primary hover:underline">
-            Back to People
-          </Link>
+      <div className="min-h-screen bg-slate-50/30 font-sans flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h2 className="text-xl font-bold text-slate-900">Tenant Not Found</h2>
+          <Button onClick={() => router.push("/people")} variant="outline">
+            Return to People
+          </Button>
         </div>
-      </MaxContainer>
+      </div>
     );
   }
 
   return (
-    <MaxContainer className="!px-0">
+    <div className="min-h-screen bg-slate-50/30 font-sans">
       {/* Linear Header */}
-      <div className="bg-white border-b border-slate-200 px-4 sm:px-7 py-4 mb-8">
-        <div className="max-w-[1600px] mx-auto">
-          <div className="flex flex-col gap-4">
-            {/* Back Link */}
-            <Link
-              href={`/tenants/${tenantId}`}
-              className="flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors w-fit"
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push(`/tenants/${tenantId}`)}
+              className="h-8 w-8 rounded-sm border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-colors"
             >
-              <ChevronLeft className="h-3 w-3" />
-              Back to Tenant Details
-            </Link>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-bold uppercase tracking-wide text-slate-900 flex items-center gap-2">
-                  Edit Tenant: {tenant.fullName}
-                </h1>
-                <p className="text-xs text-slate-500 mt-1">
-                  Update tenant information and details.
-                </p>
-              </div>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <h1 className="text-lg font-semibold text-slate-900 tracking-tight flex items-center gap-2">
+                Edit Tenant
+              </h1>
+              <p className="text-xs text-slate-500">
+                Update details for{" "}
+                <span className="font-bold text-slate-700">
+                  {tenant.fullName}
+                </span>
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="px-4 sm:px-7">
-        <EditTenantForm
-          tenant={tenant}
-          onSubmit={handleSubmit}
-          onDelete={handleDelete}
-          isLoading={updateTenantMutation.isPending}
-          isDeleting={deleteTenantMutation.isPending}
-        />
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto py-8 px-6">
+        <div className="bg-white rounded-sm border border-slate-200 shadow-sm overflow-hidden">
+          <EditTenantForm
+            tenant={tenant}
+            onSubmit={handleSubmit}
+            onDelete={handleDelete}
+            isLoading={updateTenantMutation.isPending}
+            isDeleting={deleteTenantMutation.isPending}
+          />
+        </div>
       </div>
-    </MaxContainer>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 import invoiceService from "../services/invoice.service";
-import { emailTemplates } from "../utils/emailTemplates";
+import { emailService, emailTemplates } from "../email";
 import { logger } from "../utils/logger";
-import { sendBulkEmails } from "../utils/sendEmail";
 
 export interface OverdueRemindersResult {
   reminders: number;
@@ -30,7 +29,8 @@ export async function sendOverdueReminders(): Promise<OverdueRemindersResult> {
       return result;
     }
 
-    const emails = overdueInvoices
+    // Prepare bulk email data
+    const recipients = overdueInvoices
       .filter((invoice) => invoice.tenant_email)
       .map((invoice) => {
         const daysOverdue = Math.floor(
@@ -38,23 +38,20 @@ export async function sendOverdueReminders(): Promise<OverdueRemindersResult> {
             (1000 * 60 * 60 * 24)
         );
 
-        const emailContent = emailTemplates.overdueNotice({
-          tenantName: invoice.tenant_name || "Tenant",
-          propertyAddress:
-            invoice.property_address || invoice.property_name || "Property",
-          amount: invoice.amount,
-          daysOverdue,
-        });
-
         return {
-          to: invoice.tenant_email!,
-          subject: emailContent.subject,
-          html: emailContent.html,
-          text: emailContent.text,
+          email: invoice.tenant_email!,
+          data: {
+            tenantName: invoice.tenant_name || "Tenant",
+            propertyAddress:
+              invoice.property_address || invoice.property_name || "Property",
+            amount: invoice.amount,
+            daysOverdue,
+          },
         };
       });
 
-    const emailResult = await sendBulkEmails(emails, 10, 2000);
+    // Use new EmailService for bulk sending
+    const emailResult = await emailService.sendBulkOverdueNotices(recipients);
 
     result.emailsSent = emailResult.sent;
     result.emailsFailed = emailResult.failed;
@@ -62,12 +59,9 @@ export async function sendOverdueReminders(): Promise<OverdueRemindersResult> {
     logger.info(
       `✅ Overdue reminders completed: ${emailResult.sent} sent, ${emailResult.failed} failed`
     );
-
-    if (emailResult.failedEmails.length > 0) {
-      logger.warn("Failed to send emails to:", emailResult.failedEmails);
-    }
-  } catch (error: any) {
-    throw new Error(`Failed to send overdue reminders: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to send overdue reminders: ${message}`);
   }
 
   return result;

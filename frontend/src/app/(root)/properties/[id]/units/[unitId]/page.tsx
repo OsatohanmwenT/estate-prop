@@ -9,7 +9,6 @@ import {
   ChevronRight,
   CreditCard,
   FileText,
-  History,
   Home,
   LayoutTemplate,
   User,
@@ -22,6 +21,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { UnitHistory } from "~/components/units/UnitHistory";
 import { cn, formatCurrency } from "~/lib/utils";
 import { unitService } from "~/services/unitService";
 
@@ -329,15 +329,10 @@ export default function UnitDetailsPage() {
                 </div>
               </TabsContent>
               <TabsContent value="history" className="m-0">
-                <div className="flex flex-col items-center justify-center py-12 text-center border border-dashed border-slate-200 rounded-sm bg-slate-50/50">
-                  <History className="h-8 w-8 text-slate-300 mb-3" />
-                  <p className="text-sm font-medium text-slate-900">
-                    No history available
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Activity log for this unit will appear here.
-                  </p>
-                </div>
+                <UnitHistory
+                  unitId={unitId}
+                  tenantId={unit.tenant?.id || null}
+                />
               </TabsContent>
             </div>
           </Tabs>

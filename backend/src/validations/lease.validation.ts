@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const createLeaseSchema = z.object({
-  body: z.object({
     startDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
       message: "Invalid start date format",
     }),
@@ -34,9 +33,6 @@ export const createLeaseSchema = z.object({
       .optional(),
     notes: z.string().optional(),
     agreementUrl: z.string().optional(),
-  }),
-});
+  });
 
-export const updateLeaseSchema = z.object({
-  body: createLeaseSchema.shape.body.partial(),
-});
+export const updateLeaseSchema = createLeaseSchema.partial();

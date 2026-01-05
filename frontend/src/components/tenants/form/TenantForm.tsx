@@ -71,7 +71,7 @@ export function TenantForm({
   const { data: units, isLoading: isLoadingUnits } = useQuery({
     queryKey: ["units", selectedPropertyId],
     queryFn: () => unitService.getUnitsByProperty(selectedPropertyId),
-    enabled: !!selectedPropertyId && selectedPropertyId.length > 0,
+    enabled: !!selectedPropertyId,
   });
 
   // Reset unit if property changes
@@ -287,7 +287,7 @@ export function TenantForm({
                       <SelectContent>
                         {units?.data?.map((unit: Unit) => (
                           <SelectItem key={unit.id} value={unit.id.toString()}>
-                            {unit.name} ({unit.type})
+                            {unit.code} ({unit.type})
                           </SelectItem>
                         ))}
                       </SelectContent>

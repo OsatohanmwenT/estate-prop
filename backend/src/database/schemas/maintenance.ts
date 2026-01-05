@@ -1,18 +1,16 @@
+import { relations } from "drizzle-orm";
 import {
+  decimal,
+  pgEnum,
   pgTable,
-  serial,
-  integer,
-  varchar,
   text,
   timestamp,
   uuid,
-  pgEnum,
-  decimal,
+  varchar
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
 import { properties } from "./property";
 import { propertyUnits } from "./unit";
-import { users, organizations } from "./user";
+import { organizations, users } from "./user";
 
 export const maintenancePriorityEnum = pgEnum("maintenance_priority", [
   "low",

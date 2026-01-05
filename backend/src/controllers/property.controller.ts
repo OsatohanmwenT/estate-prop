@@ -1,7 +1,7 @@
+import { Request, Response } from "express";
 import { propertyService } from "../services/property.service";
 import { GetPropertiesParams } from "../types/property";
 import { asyncHandler } from "../utils/asyncHandler";
-import { Request, Response } from "express";
 
 export const getAllProperties = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {

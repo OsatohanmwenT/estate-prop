@@ -1,7 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { LoaderCircle } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ZodType } from "zod";
 import {
   Controller,
   DefaultValues,
@@ -10,17 +13,14 @@ import {
   useForm,
   UseFormReturn,
 } from "react-hook-form";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { ZodType } from "zod";
+import { useAuth } from "~/contexts/AuthContext";
+import { cn } from "~/lib/utils";
+import { Button } from "../ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import Link from "next/link";
 import PasswordInput from "./PasswordInput";
-import { LoaderCircle } from "lucide-react";
-import { toast } from "sonner";
-import { cn } from "~/lib/utils";
-import { useAuth } from "~/contexts/AuthContext";
 
 interface AuthFormProps<T extends FieldValues> {
   type: "SIGN_IN" | "SIGN_UP";
@@ -57,12 +57,9 @@ const AuthForm = <T extends FieldValues>({
     try {
       const result = await onSubmit(data);
       if (result.success) {
-        // Cookies are set automatically by backend
         toast.success(
           isSignIn ? "Signed in successfully!" : "Account created successfully!"
         );
-
-        // Update AuthContext with the new user state
         await refreshUser();
 
         if (result.user && !result.user.organizationId) {

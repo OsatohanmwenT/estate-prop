@@ -25,6 +25,13 @@ class UnitService extends BaseService {
   async deleteUnit(propertyId: string, unitId: string) {
     return this.delete(`/${propertyId}/unit/${unitId}`);
   }
+
+  async getUnitsByProperty(propertyId: string) {
+    if (!propertyId) return { data: [], total: 0 };
+    return this.get<{ data: Unit[]; total: number }>(
+      `/?propertyId=${propertyId}&limit=100`
+    );
+  }
 }
 
 export const unitService = new UnitService();

@@ -3,6 +3,8 @@ import {
   OverdueRentItem,
   PendingPaymentItem,
   UpcomingLeaseItem,
+  VacantUnit,
+  RevenueProjection,
 } from "~/types/dashboard";
 import { BaseService } from "./baseService";
 
@@ -25,6 +27,14 @@ class DashboardService extends BaseService {
 
   async getUpcomingLeaseItems(days: number = 60): Promise<UpcomingLeaseItem[]> {
     return this.get<UpcomingLeaseItem[]>(`/upcoming-leases?days=${days}`);
+  }
+
+  async getVacantUnits(): Promise<VacantUnit[]> {
+    return this.get<VacantUnit[]>("/vacant-units");
+  }
+
+  async getRevenueProjections(): Promise<RevenueProjection[]> {
+    return this.get<RevenueProjection[]>("/revenue-projections");
   }
 }
 

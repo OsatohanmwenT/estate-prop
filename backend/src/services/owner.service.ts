@@ -1,6 +1,12 @@
+import { and, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "../database";
-import { owners } from "../database/schemas";
-import { eq, ilike, or, and, sql } from "drizzle-orm";
+import {
+  invoices,
+  leases,
+  owners,
+  properties,
+  propertyUnits,
+} from "../database/schemas";
 import { CreateOwnerData, UpdateOwnerData } from "../types/owner";
 
 class OwnerService {
@@ -54,6 +60,88 @@ class OwnerService {
       .limit(1);
 
     return owner || null;
+  }
+
+  /**
+   * Get owner by ID with detailed statistics
+   */
+  async getOwnerWithDetails(id: string) {
+    const [owner] = await db
+      .select()
+      .from(owners)
+      .where(eq(owners.id, id))
+      .limit(1);
+
+    if (!owner) {
+      return null;
+    }
+
+    const ownerProperties = await db
+      .select({
+        id: properties.id,
+        name: properties.name,
+        address: properties.address,
+        city: properties.city,
+        state: properties.state,
+        category: properties.category,
+        createdAt: properties.createdAt,
+      })
+      .from(properties)
+      .where(eq(properties.ownerId, id));
+
+    // Get property IDs for statistics
+    const propertyIds = ownerProperties.map((p) => p.id);
+
+    let totalUnits = 0;
+    let totalRevenue = "0";
+    let managementFeeTotal = "0";
+    let ownerShareTotal = "0";
+
+    if (propertyIds.length > 0) {
+      // Get total units count
+      const [unitsCount] = await db
+        .select({
+          count: sql<number>`cast(count(*) as integer)`,
+        })
+        .from(propertyUnits)
+        .where(
+          sql`${propertyUnits.propertyId} IN (${sql.raw(
+            propertyIds.map((id) => `'${id}'`).join(",")
+          )})`
+        );
+
+      totalUnits = unitsCount.count;
+
+      // Get total revenue and breakdown from all properties via leases
+      const [revenueResult] = await db
+        .select({
+          total: sql<string>`COALESCE(SUM(${invoices.amountPaid}), 0)::text`,
+          managementFee: sql<string>`COALESCE(SUM(${invoices.managementFee}), 0)::text`,
+          ownerShare: sql<string>`COALESCE(SUM(${invoices.ownerAmount}), 0)::text`,
+        })
+        .from(invoices)
+        .innerJoin(leases, eq(invoices.leaseId, leases.id))
+        .innerJoin(propertyUnits, eq(leases.unitId, propertyUnits.id))
+        .where(
+          sql`${propertyUnits.propertyId} IN (${sql.raw(
+            propertyIds.map((id) => `'${id}'`).join(",")
+          )})`
+        );
+
+      totalRevenue = revenueResult.total;
+      managementFeeTotal = revenueResult.managementFee;
+      ownerShareTotal = revenueResult.ownerShare;
+    }
+
+    return {
+      ...owner,
+      propertiesCount: ownerProperties.length,
+      unitsCount: totalUnits,
+      totalRevenue,
+      managementFeeTotal,
+      ownerShareTotal,
+      properties: ownerProperties,
+    };
   }
 
   async getAllOwners(options?: {

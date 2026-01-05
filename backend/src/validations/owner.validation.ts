@@ -21,6 +21,21 @@ export const createOwnerSchema = z.object({
     .min(5, "Address must be at least 5 characters")
     .max(512, "Address must not exceed 512 characters")
     .trim(),
+  bankName: z
+    .string()
+    .max(100, "Bank name must not exceed 100 characters")
+    .trim()
+    .optional(),
+  accountNumber: z
+    .string()
+    .max(20, "Account number must not exceed 20 characters")
+    .trim()
+    .optional(),
+  accountName: z
+    .string()
+    .max(256, "Account name must not exceed 256 characters")
+    .trim()
+    .optional(),
   organizationId: z
     .string()
     .uuid("Organization ID must be a valid UUID")
@@ -51,6 +66,21 @@ export const updateOwnerSchema = z.object({
     .string()
     .min(5, "Address must be at least 5 characters")
     .max(512, "Address must not exceed 512 characters")
+    .trim()
+    .optional(),
+  bankName: z
+    .string()
+    .max(100, "Bank name must not exceed 100 characters")
+    .trim()
+    .optional(),
+  accountNumber: z
+    .string()
+    .max(20, "Account number must not exceed 20 characters")
+    .trim()
+    .optional(),
+  accountName: z
+    .string()
+    .max(256, "Account name must not exceed 256 characters")
     .trim()
     .optional(),
   managedBy: z.uuid("Invalid manager ID").optional().nullable(),

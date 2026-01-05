@@ -9,6 +9,7 @@
     "dev-start": "nodemon --watch src --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:migrate": "pnpm db:migrate && pnpm start",
     "setup": "bash setup-docker.sh",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

@@ -8,6 +8,7 @@ import {
   getUpcomingLeaseExpirations,
   getOverdueRentItems,
   getUpcomingLeaseItems,
+  getRevenueProjections,
 } from "../controllers/dashboard.controller";
 
 const dashboardRouter: Router = Router();
@@ -22,6 +23,7 @@ dashboardRouter.get("/summary", getDashboardSummary);
 dashboardRouter.get("/overdue-rent", getOverdueRentItems);
 dashboardRouter.get("/pending-payments", getPendingPaymentDetails);
 dashboardRouter.get("/upcoming-leases", getUpcomingLeaseItems);
+dashboardRouter.get("/revenue-projections", getRevenueProjections);
 
 // Legacy endpoints (for backward compatibility)
 dashboardRouter.get("/overdue-rent/tenants", getTenantsWithOverdueRent);

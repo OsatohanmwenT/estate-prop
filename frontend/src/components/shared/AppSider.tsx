@@ -11,7 +11,8 @@ import {
   Receipt,
   Settings,
   Users,
-  Wallet
+  Wallet,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,24 +29,24 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "~/components/ui/sidebar";
-import { TeamSwitcher } from "~/components/ui/team-switcher";
 import { cn } from "~/lib/utils";
+import { OrganizationSwitcher } from "../ui/organization-switcher";
+
+interface NavItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  exactMatch?: boolean;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
 
 // Mock Data for Team Switcher
-const teams = [
-  {
-    name: "PropEstate Inc.",
-    logo: Command,
-    plan: "Enterprise",
-  },
-  {
-    name: "Acme Corp.",
-    logo: Building2,
-    plan: "Startup",
-  },
-];
 
-const NAV_GROUPS = [
+const NAV_GROUPS: NavGroup[] = [
   {
     label: "Overview",
     items: [
@@ -53,6 +54,7 @@ const NAV_GROUPS = [
         title: "Dashboard",
         url: "/dashboard",
         icon: LayoutDashboard,
+        exactMatch: true,
       },
     ],
   },
@@ -108,7 +110,7 @@ const NAV_GROUPS = [
   },
 ];
 
-const SECONDARY_ITEMS = [
+const SECONDARY_ITEMS: NavItem[] = [
   {
     title: "Help & Support",
     url: "/support",
@@ -116,7 +118,7 @@ const SECONDARY_ITEMS = [
   },
   {
     title: "Settings",
-    url: "/settings",
+    url: "/settings/account",
     icon: Settings,
   },
 ];
@@ -124,18 +126,26 @@ const SECONDARY_ITEMS = [
 export function AppSidebar() {
   const pathname = usePathname();
 
+  const isActiveRoute = (item: NavItem): boolean => {
+    if (item.exactMatch) {
+      return pathname === item.url;
+    }
+    return pathname.startsWith(item.url);
+  };
+
   return (
     <Sidebar
       className="font-sans border-r border-slate-200 bg-slate-50/30 text-slate-900"
       collapsible="icon"
+      aria-label="Main navigation sidebar"
     >
       {/* Header with Team Switcher */}
       <SidebarHeader className="border-b border-transparent">
-        <TeamSwitcher teams={teams} />
+        <OrganizationSwitcher />
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-4">
-        {NAV_GROUPS.map((group, index) => (
+        {NAV_GROUPS.map((group) => (
           <SidebarGroup key={group.label} className="px-0">
             <SidebarGroupLabel className="px-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
               {group.label}
@@ -143,7 +153,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5">
                 {group.items.map((item) => {
-                  const isActive = pathname.startsWith(item.url);
+                  const isActive = isActiveRoute(item);
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
@@ -160,6 +170,7 @@ export function AppSidebar() {
                         <Link
                           href={item.url}
                           className="flex items-center gap-3 w-full"
+                          aria-current={isActive ? "page" : undefined}
                         >
                           <item.icon
                             strokeWidth={isActive ? 2 : 1.5}
@@ -167,8 +178,9 @@ export function AppSidebar() {
                               "size-5 transition-colors shrink-0",
                               isActive
                                 ? "text-slate-900"
-                                : "text-slate-600 group-hover:text-slate-600"
+                                : "text-slate-600 group-hover:text-slate-900"
                             )}
+                            aria-hidden="true"
                           />
                           <span className="truncate">{item.title}</span>
                         </Link>
@@ -185,30 +197,42 @@ export function AppSidebar() {
       {/* Footer */}
       <SidebarFooter className="border-t border-slate-100">
         <SidebarMenu>
-          {SECONDARY_ITEMS.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                tooltip={item.title}
-                className={cn(
-                  "h-9 text-slate-500 hover:bg-white hover:border-slate-200 hover:text-slate-900 rounded-md border border-transparent transition-all"
-                )}
-              >
-                <Link
-                  href={item.url}
-                  className="flex items-center gap-3 w-full"
+          {SECONDARY_ITEMS.map((item) => {
+            const isActive = isActiveRoute(item);
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={item.title}
+                  isActive={isActive}
+                  className={cn(
+                    "h-9 rounded-md border transition-all",
+                    isActive
+                      ? "bg-white border-slate-200 text-slate-900"
+                      : "border-transparent text-slate-500 hover:bg-white hover:border-slate-200 hover:text-slate-900"
+                  )}
                 >
-                  <item.icon
-                    className="size-5 text-slate-400 group-hover:text-slate-600 shrink-0"
-                    strokeWidth={1.5}
-                  />
-                  <span className="text-sm font-medium truncate">
-                    {item.title}
-                  </span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+                  <Link
+                    href={item.url}
+                    className="flex items-center gap-3 w-full"
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    <item.icon
+                      className={cn(
+                        "size-5 shrink-0 transition-colors",
+                        isActive ? "text-slate-900" : "text-slate-400"
+                      )}
+                      strokeWidth={isActive ? 2 : 1.5}
+                      aria-hidden="true"
+                    />
+                    <span className="text-sm font-medium truncate">
+                      {item.title}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />

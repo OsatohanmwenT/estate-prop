@@ -85,7 +85,27 @@ export const getOwnerById = asyncHandler(
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
+      const { details } = req.query;
 
+      // If details=true, return owner with statistics and properties
+      if (details === "true") {
+        const ownerWithDetails = await ownerService.getOwnerWithDetails(id);
+
+        if (!ownerWithDetails) {
+          return res.status(404).json({
+            success: false,
+            message: "Owner not found",
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: "Owner retrieved successfully",
+          data: ownerWithDetails,
+        });
+      }
+
+      // Otherwise, return basic owner info
       const owner = await ownerService.findOwnerById(id);
 
       if (!owner) {

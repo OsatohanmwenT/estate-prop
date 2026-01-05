@@ -1,11 +1,12 @@
 import { eq, and, lte, gte, sql } from "drizzle-orm";
 import { db } from "../database";
 import {
-  rentPayments,
   leases,
   tenants,
   properties,
   propertyUnits,
+  transactions,
+  invoices,
 } from "../database/schemas";
 
 class DashboardService {
@@ -24,15 +25,12 @@ class DashboardService {
 
     const result = await db
       .select({
-        totalAmount: sql<string>`COALESCE(SUM(${rentPayments.amount}), 0)`,
-        tenantCount: sql<number>`COUNT(DISTINCT ${leases.tenantId})`,
-        invoiceCount: sql<number>`COUNT(${rentPayments.id})`,
+        totalAmount: sql<string>`COALESCE(SUM(${invoices.amount}), 0)`,
+        tenantCount: sql<number>`COUNT(DISTINCT ${invoices.tenantId})`,
+        invoiceCount: sql<number>`COUNT(${invoices.id})`,
       })
-      .from(rentPayments)
-      .innerJoin(leases, eq(rentPayments.leaseId, leases.id))
-      .where(
-        and(eq(rentPayments.status, "overdue"), lte(rentPayments.dueDate, now))
-      );
+      .from(invoices)
+      .where(and(eq(invoices.status, "overdue"), lte(invoices.dueDate, now)));
 
     return {
       totalAmount: result[0]?.totalAmount || "0",
@@ -68,21 +66,16 @@ class DashboardService {
   }
 
   /**
-   * Get count of pending payments (paid but awaiting confirmation)
+   * Get count of pending payments (invoices with pending status)
    */
   async getPendingPaymentsCount() {
     const result = await db
       .select({
         count: sql<number>`CAST(COUNT(*) AS INTEGER)`,
-        totalAmount: sql<string>`COALESCE(SUM(${rentPayments.amount}), 0)`,
+        totalAmount: sql<string>`COALESCE(SUM(${invoices.amount}), 0)`,
       })
-      .from(rentPayments)
-      .where(
-        and(
-          eq(rentPayments.status, "pending"),
-          sql`${rentPayments.paymentDate} IS NOT NULL`
-        )
-      );
+      .from(invoices)
+      .where(eq(invoices.status, "pending"));
 
     return {
       count: Number(result[0]?.count) || 0,
@@ -108,7 +101,7 @@ class DashboardService {
         tenant_email: tenants.email,
         tenant_phone: tenants.phone,
         unit_id: propertyUnits.id,
-        unit_name: propertyUnits.name,
+        unit_name: propertyUnits.code,
         property_id: properties.id,
         property_name: properties.name,
         property_address: properties.address,
@@ -167,7 +160,7 @@ class DashboardService {
         tenant_email: tenants.email,
         tenant_phone: tenants.phone,
         unit_id: propertyUnits.id,
-        unit_name: propertyUnits.name,
+        unit_name: propertyUnits.code,
         property_id: properties.id,
         property_name: properties.name,
       })
@@ -245,18 +238,15 @@ class DashboardService {
         tenant_name: tenants.fullName,
         tenant_email: tenants.email,
         tenant_phone: tenants.phone,
-        totalOverdue: sql<string>`SUM(${rentPayments.amount})`,
-        overdueCount: sql<number>`COUNT(${rentPayments.id})`,
-        oldestDueDate: sql<Date>`MIN(${rentPayments.dueDate})`,
+        totalOverdue: sql<string>`SUM(${invoices.amount})`,
+        overdueCount: sql<number>`COUNT(${invoices.id})`,
+        oldestDueDate: sql<Date>`MIN(${invoices.dueDate})`,
       })
-      .from(rentPayments)
-      .innerJoin(leases, eq(rentPayments.leaseId, leases.id))
-      .innerJoin(tenants, eq(leases.tenantId, tenants.id))
-      .where(
-        and(eq(rentPayments.status, "overdue"), lte(rentPayments.dueDate, now))
-      )
+      .from(invoices)
+      .innerJoin(tenants, eq(invoices.tenantId, tenants.id))
+      .where(and(eq(invoices.status, "overdue"), lte(invoices.dueDate, now)))
       .groupBy(tenants.id, tenants.fullName, tenants.email, tenants.phone)
-      .orderBy(sql`MIN(${rentPayments.dueDate}) ASC`);
+      .orderBy(sql`MIN(${invoices.dueDate}) ASC`);
 
     return tenantsWithOverdue.map((tenant) => ({
       id: tenant.tenant_id,
@@ -278,27 +268,26 @@ class DashboardService {
 
     const overdueItems = await db
       .select({
-        invoice_id: rentPayments.id,
-        invoice_amount: rentPayments.amount,
-        invoice_dueDate: rentPayments.dueDate,
+        invoice_id: invoices.id,
+        invoice_amount: invoices.amount,
+        invoice_dueDate: invoices.dueDate,
         tenant_id: tenants.id,
         tenant_name: tenants.fullName,
         tenant_phone: tenants.phone,
+        tenant_email: tenants.email,
         unit_id: propertyUnits.id,
-        unit_name: propertyUnits.name,
+        unit_name: propertyUnits.code,
         property_id: properties.id,
         property_name: properties.name,
         property_address: properties.address,
       })
-      .from(rentPayments)
-      .innerJoin(leases, eq(rentPayments.leaseId, leases.id))
-      .innerJoin(tenants, eq(leases.tenantId, tenants.id))
+      .from(invoices)
+      .innerJoin(tenants, eq(invoices.tenantId, tenants.id))
+      .innerJoin(leases, eq(invoices.leaseId, leases.id))
       .innerJoin(propertyUnits, eq(leases.unitId, propertyUnits.id))
       .innerJoin(properties, eq(propertyUnits.propertyId, properties.id))
-      .where(
-        and(eq(rentPayments.status, "overdue"), lte(rentPayments.dueDate, now))
-      )
-      .orderBy(sql`${rentPayments.dueDate} ASC`);
+      .where(and(eq(invoices.status, "overdue"), lte(invoices.dueDate, now)))
+      .orderBy(sql`${invoices.dueDate} ASC`);
 
     return overdueItems.map((item) => ({
       id: item.invoice_id,
@@ -311,6 +300,7 @@ class DashboardService {
         new Date(item.invoice_dueDate)
       ),
       phoneNumber: item.tenant_phone,
+      email: item.tenant_email,
     }));
   }
 
@@ -321,7 +311,7 @@ class DashboardService {
     const vacantUnits = await db
       .select({
         unit_id: propertyUnits.id,
-        unit_name: propertyUnits.name,
+        unit_name: propertyUnits.code,
         unit_type: propertyUnits.type,
         unit_rentAmount: propertyUnits.rentAmount,
         unit_bedrooms: propertyUnits.bedrooms,
@@ -351,35 +341,30 @@ class DashboardService {
   }
 
   /**
-   * Get pending payment details (payments awaiting confirmation)
+   * Get pending payment details (invoices with pending status)
    * For dashboard widget - returns top 7 most recent
    */
   async getPendingPaymentDetails(limit?: number) {
     const query = db
       .select({
-        invoice_id: rentPayments.id,
-        invoice_amount: rentPayments.amount,
-        invoice_dueDate: rentPayments.dueDate,
-        invoice_paymentDate: rentPayments.paymentDate,
-        invoice_note: rentPayments.note,
+        invoice_id: invoices.id,
+        invoice_amount: invoices.amount,
+        invoice_dueDate: invoices.dueDate,
+        invoice_amountPaid: invoices.amountPaid,
+        invoice_description: invoices.description,
         tenant_id: tenants.id,
         tenant_name: tenants.fullName,
         tenant_phone: tenants.phone,
-        unit_name: propertyUnits.name,
+        unit_name: propertyUnits.code,
         property_name: properties.name,
       })
-      .from(rentPayments)
-      .innerJoin(leases, eq(rentPayments.leaseId, leases.id))
-      .innerJoin(tenants, eq(leases.tenantId, tenants.id))
+      .from(invoices)
+      .innerJoin(tenants, eq(invoices.tenantId, tenants.id))
+      .innerJoin(leases, eq(invoices.leaseId, leases.id))
       .innerJoin(propertyUnits, eq(leases.unitId, propertyUnits.id))
       .innerJoin(properties, eq(propertyUnits.propertyId, properties.id))
-      .where(
-        and(
-          eq(rentPayments.status, "pending"),
-          sql`${rentPayments.paymentDate} IS NOT NULL`
-        )
-      )
-      .orderBy(sql`${rentPayments.paymentDate} DESC`);
+      .where(eq(invoices.status, "pending"))
+      .orderBy(sql`${invoices.dueDate} DESC`);
 
     const pendingPayments = limit ? await query.limit(limit) : await query;
 
@@ -387,12 +372,12 @@ class DashboardService {
       id: payment.invoice_id,
       amount: payment.invoice_amount,
       dueDate: payment.invoice_dueDate.toISOString(),
-      paymentDate: payment.invoice_paymentDate?.toISOString() || "",
+      paymentDate: "",
       tenantId: payment.tenant_id,
       tenantName: payment.tenant_name,
       tenantPhone: payment.tenant_phone,
       propertyUnit: `${payment.property_name}, ${payment.unit_name}`,
-      note: payment.invoice_note,
+      note: payment.invoice_description,
     }));
   }
 
@@ -408,6 +393,60 @@ class DashboardService {
    */
   async getAllPendingPayments() {
     return this.getPendingPaymentDetails();
+  }
+
+  /**
+   * Get revenue projections for the next 6 months
+   * Calculates secured (paid) vs potential (expected) revenue per month
+   */
+  async getRevenueProjections() {
+    const now = new Date();
+    const months: { month: string; secured: number; potential: number }[] = [];
+
+    // Get next 6 months
+    for (let i = 0; i < 6; i++) {
+      const targetDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + i + 1, 0);
+      const monthName = targetDate.toLocaleString("default", {
+        month: "short",
+      });
+
+      // Get potential revenue from active leases for this month
+      const potentialResult = await db
+        .select({
+          total: sql<string>`COALESCE(SUM(${leases.rentAmount}), 0)`,
+        })
+        .from(leases)
+        .where(
+          and(
+            eq(leases.status, "active"),
+            lte(leases.startDate, monthEnd),
+            gte(leases.endDate, targetDate)
+          )
+        );
+
+      // Get secured revenue (already paid invoices) for this month
+      const securedResult = await db
+        .select({
+          total: sql<string>`COALESCE(SUM(${invoices.amount}), 0)`,
+        })
+        .from(invoices)
+        .where(
+          and(
+            eq(invoices.status, "paid"),
+            gte(invoices.dueDate, targetDate),
+            lte(invoices.dueDate, monthEnd)
+          )
+        );
+
+      months.push({
+        month: monthName,
+        secured: parseFloat(securedResult[0]?.total || "0"),
+        potential: parseFloat(potentialResult[0]?.total || "0"),
+      });
+    }
+
+    return months;
   }
 }
 

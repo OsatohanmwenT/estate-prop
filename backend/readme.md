@@ -102,7 +102,7 @@ This document complements the high-level overview above with concrete, up-to-dat
 - ORM: Drizzle ORM (PostgreSQL)
 - Database: PostgreSQL (local via Neon Local; cloud via standard DATABASE_URL)
 - Email: Nodemailer (SMTP)
-- Scheduling: node-cron (recurring jobs)
+- Scheduling: **Upstash QStash** (distributed cron jobs with retries)
 - Validation: zod
 - Logging: winston
 - Package manager: pnpm (declared in package.json)
@@ -213,17 +213,71 @@ PORT=5000
   - /api/v1/tenants
   - /api/v1/leases
   - /api/v1/invoices
+  - /api/v1/cron (QStash job management)
 - See OPERATIONAL_DETAILS.md for comprehensive endpoint and workflow documentation.
 
-## Scheduled Jobs
-- Defined in src/services/job.scheduler.ts and initialized on server start.
-- Cron schedules:
-  - Generate recurring invoices: daily at 1:00 AM
-  - Update overdue invoices: daily at 2:00 AM
-  - Update expired leases: daily at 3:00 AM
-  - Send rent due reminders: daily at 9:00 AM
-  - Send overdue reminders: daily at 10:00 AM
-- TODO: Integrate actual email delivery for reminders; currently logs only.
+## Scheduled Jobs (QStash)
+
+The system uses **Upstash QStash** for production-ready distributed cron scheduling with automatic retries and monitoring.
+
+### Setup QStash Schedule:
+
+**1. Enable the daily schedule:**
+```bash
+POST http://localhost:5000/api/v1/cron/schedule
+```
+
+This creates a QStash schedule that runs daily at **2:00 AM UTC** with 5 retries.
+
+**2. Check existing schedules:**
+```bash
+GET http://localhost:5000/api/v1/cron/schedules
+```
+
+**3. Manually trigger jobs (for testing):**
+```bash
+POST http://localhost:5000/api/v1/cron/trigger
+```
+
+### Jobs Executed:
+
+1. **Generate Recurring Invoices** (with prepayment detection)
+   - Checks all active leases
+   - Calculates expected vs actual payments
+   - Only creates new invoices if tenant hasn't prepaid
+   - Handles multi-year prepayments automatically
+
+2. **Update Overdue Invoices**
+   - Marks unpaid invoices past due date as "overdue"
+
+3. **Update Expired Leases**
+   - Changes lease status from "active" to "expired" when end date passes
+
+4. **Send Rent Due Reminders**
+   - Sends reminders 7 days and 1 day before rent due date
+   - TODO: Integrate actual email delivery; currently logs only
+
+5. **Send Overdue Reminders**
+   - Notifies tenants of overdue invoices
+   - TODO: Integrate actual email delivery; currently logs only
+
+### QStash Management:
+
+- **Pause Schedule:** `POST /api/v1/cron/schedule/:scheduleId/pause`
+- **Resume Schedule:** `POST /api/v1/cron/schedule/:scheduleId/resume`
+- **Delete Schedule:** `DELETE /api/v1/cron/schedule/:scheduleId`
+
+### Prepayment Handling:
+
+The invoice generation job now intelligently handles prepayments:
+- If a tenant pays 2 years upfront, the system won't create duplicate invoices for year 2
+- If a tenant pays 3 years upfront, invoices skip until year 4
+- Works for any prepayment scenario (full term, partial term, multiple invoices)
+
+**Example:** 5-year lease with yearly billing:
+- Tenant pays ₦2.4M (years 1-2) → System creates invoice #1
+- Tenant later pays ₦3.6M (years 3-5) → System creates invoice #2
+- Years 2-5: Cron job automatically skips (detects prepayment)
 
 ## Scripts (package.json)
 - pnpm dev: ts-node-dev --respawn --transpile-only src/index.ts

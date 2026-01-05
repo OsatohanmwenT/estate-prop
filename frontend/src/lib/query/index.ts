@@ -27,6 +27,41 @@ export const useOwnerById = (ownerId: string) => {
   });
 };
 
+export const useOwnerWithDetails = (ownerId: string) => {
+  return useQuery({
+    queryKey: ["owner-details", ownerId],
+    queryFn: () => ownerService.getOwnerWithDetails(ownerId),
+    enabled: !!ownerId,
+  });
+};
+
+export const useUpdateOwner = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      ownerService.updateOwner(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["owners"] });
+      queryClient.invalidateQueries({ queryKey: ["owner", variables.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["owner-details", variables.id],
+      });
+    },
+  });
+};
+
+export const useDeleteOwner = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => ownerService.deleteOwner(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["owners"] });
+    },
+  });
+};
+
 export const useProperties = (params?: {
   search?: string;
   category?: string;
@@ -74,6 +109,18 @@ export const usePropertyUnits = (propertyId: string, enabled = true) => {
     queryKey: ["property-units", propertyId],
     queryFn: () => propertyService.getUnitsByProperty(propertyId),
     enabled: enabled && !!propertyId,
+  });
+};
+
+export const useUnitById = (
+  propertyId: string,
+  unitId: string,
+  enabled = true
+) => {
+  return useQuery({
+    queryKey: ["unit", propertyId, unitId],
+    queryFn: () => unitService.getUnitById(propertyId, unitId),
+    enabled: enabled && !!propertyId && !!unitId,
   });
 };
 

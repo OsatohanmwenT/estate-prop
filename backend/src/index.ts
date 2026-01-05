@@ -1,23 +1,25 @@
-import dotenv from "dotenv";
-import cors from "cors";
 import cookieParser from "cookie-parser";
-import propertyRouter from "./routes/propertyRoute";
-import authRouter from "./routes/authRoute";
-import ownerRouter from "./routes/ownerRoute";
-import unitRouter from "./routes/unitRoute";
-import tenantRouter from "./routes/tenantRoute";
-import leaseRouter from "./routes/leaseRoute";
-import invoiceRouter from "./routes/invoiceRoute";
-import dashboardRouter from "./routes/dashboardRoute";
-import organizationRouter from "./routes/organizationRoute";
+import cors from "cors";
+import dotenv from "dotenv";
 import express, { Request, Response } from "express";
-import { errorHandler, notFound } from "./middlewares/error.middleware";
-import jobScheduler from "./services/job.scheduler";
 import helmet from "helmet";
-import cronRouter from "./routes/cronRoute";
 import { config } from "./config";
 import { pool } from "./database";
+import { errorHandler, notFound } from "./middlewares/error.middleware";
 import { apiLimiter } from "./middlewares/rateLimiter.middleware";
+import authRouter from "./routes/authRoute";
+import cronRouter from "./routes/cronRoute";
+import dashboardRouter from "./routes/dashboardRoute";
+import documentRouter from "./routes/documentRoute";
+import invoiceRouter from "./routes/invoiceRoute";
+import leaseRouter from "./routes/leaseRoute";
+import notificationRouter from "./routes/notificationRoute";
+import organizationRouter from "./routes/organizationRoute";
+import ownerRouter from "./routes/ownerRoute";
+import propertyRouter from "./routes/propertyRoute";
+import tenantRouter from "./routes/tenantRoute";
+import unitRouter from "./routes/unitRoute";
+// import jobScheduler from "./services/job.scheduler"; // Using QStash instead
 
 dotenv.config();
 
@@ -43,6 +45,7 @@ app.use("/api", apiLimiter);
 // Routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
+app.use("/api/v1/notifications", notificationRouter);
 app.use("/api/v1/organizations", organizationRouter);
 app.use("/api/v1/properties", propertyRouter);
 app.use("/api/v1/units", unitRouter);
@@ -50,6 +53,7 @@ app.use("/api/v1/owners", ownerRouter);
 app.use("/api/v1/tenants", tenantRouter);
 app.use("/api/v1/leases", leaseRouter);
 app.use("/api/v1/invoices", invoiceRouter);
+app.use("/api/v1/documents", documentRouter);
 app.use("/api/v1/cron", cronRouter);
 
 app.get("/", (req: Request, res: Response) => {
@@ -66,6 +70,7 @@ app.get("/", (req: Request, res: Response) => {
       tenants: "/api/v1/tenants",
       leases: "/api/v1/leases",
       invoices: "/api/v1/invoices",
+      documents: "/api/v1/documents",
     },
   });
 });
@@ -99,5 +104,8 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
-  jobScheduler.initializeJobs();
+  console.log(
+    `⏰ Scheduled jobs managed via QStash: POST /api/v1/cron/schedule`
+  );
+  // jobScheduler.initializeJobs(); // Using QStash instead - call POST /api/v1/cron/schedule to enable
 });

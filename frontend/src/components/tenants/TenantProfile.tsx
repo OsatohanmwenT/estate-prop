@@ -1,34 +1,35 @@
 "use client";
 
 import {
-    ArrowRight,
-    Briefcase,
-    Calendar,
-    CreditCard,
-    Download,
-    ExternalLink,
-    FileText,
-    Mail,
-    MapPin,
-    Phone,
-    User
+  ArrowRight,
+  Briefcase,
+  Calendar,
+  CreditCard,
+  Download,
+  ExternalLink,
+  FileText,
+  Mail,
+  MapPin,
+  Phone,
+  User,
 } from "lucide-react";
 import Link from "next/link";
+import { TenantPaymentsTab } from "~/components/tenants/TenantPaymentsTab";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { cn, formatCurrency, formatDate } from "~/lib/utils";
 import {
-    TenantMetadata,
-    TenantProfile as TenantProfileType,
+  TenantMetadata,
+  TenantProfile as TenantProfileType,
 } from "~/types/tenant";
 
 interface TenantProfileProps {
@@ -371,45 +372,7 @@ export function TenantProfile({ tenant }: TenantProfileProps) {
               <CardContent className="p-0">
                 {/* Payment Tab */}
                 <TabsContent value="payments" className="m-0">
-                  {tenant.paymentHistory && tenant.paymentHistory.length > 0 ? (
-                    <div className="divide-y divide-slate-100">
-                      {tenant.paymentHistory.map((payment) => (
-                        <div
-                          key={payment.id}
-                          className="flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors"
-                        >
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-bold text-slate-900">
-                              {formatCurrency(payment.amount)}
-                            </span>
-                            <span className="text-[10px] uppercase text-slate-400 font-semibold tracking-wide">
-                              {formatDate(payment.date)} •{" "}
-                              {payment.method.replace(/_/g, " ")}
-                            </span>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-sm border",
-                              getPaymentStatusBadge(payment.status)
-                            )}
-                          >
-                            {payment.status}
-                          </Badge>
-                        </div>
-                      ))}
-                      <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
-                        <Link
-                          href="#"
-                          className="text-xs font-bold text-emerald-600 hover:text-emerald-700 uppercase tracking-wider"
-                        >
-                          View Full Ledger
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <EmptyState message="No payment history recorded." />
-                  )}
+                  <TenantPaymentsTab tenantId={tenant.id} />
                 </TabsContent>
 
                 {/* Documents Tab */}

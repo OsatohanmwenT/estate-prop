@@ -1,21 +1,20 @@
 // unit.ts
 import { relations } from "drizzle-orm";
 import {
-  integer,
-  pgTable,
-  varchar,
-  pgEnum,
-  timestamp,
-  serial,
-  decimal,
-  text,
-  index,
   boolean,
-  primaryKey,
+  decimal,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  serial,
+  text,
+  timestamp,
   uuid,
+  varchar
 } from "drizzle-orm/pg-core";
-import { properties } from "./property";
 import { leases } from "./lease";
+import { properties } from "./property";
 
 export const unitTypeEnum = pgEnum("unit_type", [
   "apartment",
