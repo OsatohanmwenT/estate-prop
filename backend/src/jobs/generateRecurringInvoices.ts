@@ -4,7 +4,7 @@ import invoiceService from "../services/invoice.service";
 export interface GenerateInvoicesResult {
   created: number;
   skipped: number;
-  errors: Array<{ leaseId: number; error: string }>;
+  errors: Array<{ leaseId: string; error: string }>;
 }
 
 export async function generateRecurringInvoices(): Promise<GenerateInvoicesResult> {
