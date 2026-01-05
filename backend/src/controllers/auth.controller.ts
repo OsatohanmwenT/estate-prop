@@ -17,18 +17,19 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const tokens = await authService.generateToken(newUser.id);
 
   // Set httpOnly cookies
+  const isProduction = process.env.NODE_ENV === "production";
   res.cookie("access_token", tokens.accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 15 * 60 * 1000, // 15 minutes
     path: "/",
   });
 
   res.cookie("refresh_token", tokens.refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/",
   });
