@@ -4,7 +4,7 @@ import { GetPropertiesParams } from "../types/property";
 import { asyncHandler } from "../utils/asyncHandler";
 
 export const getAllProperties = asyncHandler(
-  async (req: Request, res: Response): Promise<void> => {
+  async (req: Request, res: Response) => {
     try {
       const {
         limit = 10,
