@@ -81,7 +81,7 @@ export const refreshToken = asyncHandler(
     const refreshToken = req.cookies.refresh_token;
 
     const isProduction = process.env.NODE_ENV === "production";
-    
+
     if (!refreshToken) {
       // Clear any stale cookies
       res.clearCookie("access_token", {
