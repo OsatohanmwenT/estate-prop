@@ -18,6 +18,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   // Set httpOnly cookies
   const isProduction = process.env.NODE_ENV === "production";
+  console.log("isProduction:", isProduction);
   res.cookie("access_token", tokens.accessToken, {
     httpOnly: true,
     secure: isProduction,
