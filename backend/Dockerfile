@@ -27,8 +27,17 @@ CMD ["pnpm", "dev"]
 
 FROM base AS production
 ENV NODE_ENV=production
-COPY --from=prod-deps /app/node_modules ./node_modules
+
+# Copy all dependencies first (including dev deps for build)
+COPY --from=dev-deps /app/node_modules ./node_modules
 COPY . .
+
+# Build TypeScript to dist/
+RUN pnpm build
+
+# Remove dev dependencies and install only production deps
+RUN rm -rf node_modules
+COPY --from=prod-deps /app/node_modules ./node_modules
 
 RUN addgroup appgroup && adduser -S appuser -G appgroup && chown -R appuser:appgroup /app
 USER appuser
