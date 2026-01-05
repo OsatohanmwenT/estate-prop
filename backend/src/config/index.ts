@@ -35,5 +35,12 @@ export const config = {
     "http://localhost:3000",
     "http://localhost:5173",
     "https://estate-prop.vercel.app"
-  ],
+  ],data
+: 
+message
+: 
+"Refresh token not found"
+success
+: 
+false
 };

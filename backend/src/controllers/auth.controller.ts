@@ -17,18 +17,18 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const tokens = await authService.generateToken(newUser.id);
 
   // Set httpOnly cookies
-  res.cookie("access_token", tokens.accessToken, {
+  const isProduction = process.env.NODE_ENV === \"production\";\n  res.cookie("access_token", tokens.accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 15 * 60 * 1000, // 15 minutes
     path: "/",
   });
 
   res.cookie("refresh_token", tokens.refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/",
   });
@@ -49,18 +49,19 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const tokens = await authService.generateToken(user.id);
 
   // Set httpOnly cookies
+  const isProduction = process.env.NODE_ENV === "production";
   res.cookie("access_token", tokens.accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 15 * 60 * 1000, // 15 minutes
     path: "/",
   });
 
   res.cookie("refresh_token", tokens.refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/",
   });
@@ -78,18 +79,20 @@ export const refreshToken = asyncHandler(
   async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refresh_token;
 
+    const isProduction = process.env.NODE_ENV === "production";
+    
     if (!refreshToken) {
       // Clear any stale cookies
       res.clearCookie("access_token", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         path: "/",
       });
       res.clearCookie("refresh_token", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         path: "/",
       });
 
@@ -105,16 +108,16 @@ export const refreshToken = asyncHandler(
       // Set new httpOnly cookies with rotated tokens
       res.cookie("access_token", tokens.accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 15 * 60 * 1000, // 15 minutes
         path: "/",
       });
 
       res.cookie("refresh_token", tokens.refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: "/",
       });
@@ -127,14 +130,14 @@ export const refreshToken = asyncHandler(
       // If refresh fails, clear the stale cookies
       res.clearCookie("access_token", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         path: "/",
       });
       res.clearCookie("refresh_token", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         path: "/",
       });
 
@@ -157,17 +160,18 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Clear httpOnly cookies with the same options used when setting them
+  const isProduction = process.env.NODE_ENV === "production";
   res.clearCookie("access_token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
   });
 
   res.clearCookie("refresh_token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
   });
 

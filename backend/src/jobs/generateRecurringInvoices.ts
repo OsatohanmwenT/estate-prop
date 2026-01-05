@@ -1,5 +1,5 @@
-import leaseService from "../services/lease.service";
 import invoiceService from "../services/invoice.service";
+import leaseService from "../services/lease.service";
 
 export interface GenerateInvoicesResult {
   created: number;
