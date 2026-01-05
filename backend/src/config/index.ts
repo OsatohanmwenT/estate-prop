@@ -34,13 +34,6 @@ export const config = {
   corsOrigins: process.env.CORS_ORIGINS?.split(",") || [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://estate-prop.vercel.app"
-  ],data
-: 
-message
-: 
-"Refresh token not found"
-success
-: 
-false
+    "https://estate-prop.vercel.app",
+  ],
 };

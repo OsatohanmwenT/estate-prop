@@ -22,15 +22,15 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   res.cookie("access_token", tokens.accessToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "none",
-    maxAge: 15 * 60 * 1000, // 15 minutes
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 30 * 60 * 1000, // 30 minutes
     path: "/",
   });
 
   res.cookie("refresh_token", tokens.refreshToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "none",
+    sameSite: isProduction ? "none" : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: "/",
   });
