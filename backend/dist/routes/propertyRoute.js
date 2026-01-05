@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const property_controller_1 = require("../controllers/property.controller");
+const validate_1 = require("../utils/validate");
+const property_validation_1 = require("../validations/property.validation");
+const unit_controller_1 = require("../controllers/unit.controller");
+const unit_validation_1 = require("../validations/unit.validation");
+const propertyRouter = (0, express_1.Router)();
+propertyRouter.use(auth_middleware_1.authenticate);
+propertyRouter.get("/", property_controller_1.getAllProperties);
+propertyRouter.get("/:id", property_controller_1.getPropertyById);
+propertyRouter.post("/", (0, auth_middleware_1.authorize)(["owner", "manager"]), (0, validate_1.validate)(property_validation_1.createPropertySchema), property_controller_1.createProperty);
+propertyRouter.put("/:id", (0, auth_middleware_1.authorize)(["owner", "manager"]), (0, validate_1.validate)(property_validation_1.updatePropertySchema), property_controller_1.updateProperty);
+propertyRouter.delete("/:id", (0, auth_middleware_1.authorize)(["owner", "manager"]), property_controller_1.deleteProperty);
+propertyRouter.get("/:propertyId/units", unit_controller_1.getUnitsByProperty);
+propertyRouter.post("/:propertyId/units", (0, auth_middleware_1.authorize)(["owner", "manager"]), (0, validate_1.validate)(unit_validation_1.createUnitSchema), unit_controller_1.createUnit);
+exports.default = propertyRouter;
+//# sourceMappingURL=propertyRoute.js.map
