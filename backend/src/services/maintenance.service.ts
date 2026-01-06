@@ -3,24 +3,23 @@
  * Handles maintenance requests and logs
  */
 
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../database";
 import {
-  maintenanceRequests,
-  maintenanceLogs,
+    maintenanceLogs,
+    maintenanceRequests,
 } from "../database/schemas/maintenance";
-import { users } from "../database/schemas/user";
 import { properties } from "../database/schemas/property";
 import { propertyUnits } from "../database/schemas/unit";
-import { logger } from "../utils/logger";
+import { users } from "../database/schemas/user";
 import type {
-  CreateMaintenanceRequestDTO,
-  UpdateMaintenanceRequestDTO,
-  MaintenanceRequestFilters,
-  CreateMaintenanceLogDTO,
-  MaintenanceLogDTO,
-  MaintenanceStatus,
+    CreateMaintenanceLogDTO,
+    CreateMaintenanceRequestDTO,
+    MaintenanceLogDTO,
+    MaintenanceRequestFilters,
+    UpdateMaintenanceRequestDTO
 } from "../types/maintenance";
+import { logger } from "../utils/logger";
 
 class MaintenanceService {
   /**
@@ -30,7 +29,10 @@ class MaintenanceService {
     try {
       const [request] = await db
         .insert(maintenanceRequests)
-        .values(data)
+        .values({
+          ...data,
+          estimatedCost: data.estimatedCost ? data.estimatedCost.toString() : undefined,
+        })
         .returning();
 
       // Create initial log
@@ -76,7 +78,12 @@ class MaintenanceService {
       // Update the request
       const [updated] = await db
         .update(maintenanceRequests)
-        .set({ ...updates, updatedAt: new Date() })
+        .set({
+          ...updates,
+          estimatedCost: updates.estimatedCost ? updates.estimatedCost.toString() : undefined,
+          actualCost: updates.actualCost ? updates.actualCost.toString() : undefined,
+          updatedAt: new Date(),
+        })
         .where(eq(maintenanceRequests.id, id))
         .returning();
 
@@ -114,13 +121,13 @@ class MaintenanceService {
         });
       }
 
-      if (updates.actualCost && updates.actualCost !== current.actualCost) {
+      if (updates.actualCost && updates.actualCost.toString() !== current.actualCost) {
         await this.createLog({
           maintenanceRequestId: id,
           userId,
           action: "cost_updated",
           description: `Actual cost updated`,
-          previousValue: current.actualCost?.toString() || "0",
+          previousValue: current.actualCost || "0",
           newValue: updates.actualCost.toString(),
         });
       }
@@ -176,7 +183,7 @@ class MaintenanceService {
           },
           unit: {
             id: propertyUnits.id,
-            unitNumber: propertyUnits.unitNumber,
+            unitNumber: propertyUnits.code,
           },
           reporter: {
             id: users.id,
@@ -253,7 +260,7 @@ class MaintenanceService {
             address: properties.address,
           },
           unit: {
-            unitNumber: propertyUnits.unitNumber,
+            unitNumber: propertyUnits.code,
           },
           reporter: {
             fullName: users.fullName,
@@ -422,7 +429,7 @@ class MaintenanceService {
           createdAt: maintenanceRequests.createdAt,
           unit: {
             id: propertyUnits.id,
-            unitNumber: propertyUnits.unitNumber,
+            unitNumber: propertyUnits.code,
           },
         })
         .from(maintenanceRequests)

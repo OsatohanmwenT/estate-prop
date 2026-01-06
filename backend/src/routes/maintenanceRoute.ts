@@ -21,7 +21,7 @@ import {
   markReminderSent,
 } from "../controllers/maintenance.controller";
 
-const router = Router();
+const router: Router = Router();
 
 // All routes require authentication
 router.use(authenticate);
