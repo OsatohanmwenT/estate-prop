@@ -11,7 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { useNotificationHistory } from "~/lib/query/notifications";
+import {
+  useNotificationHistory,
+  useMarkAllAsRead,
+  useMarkAsRead,
+} from "~/lib/query/notifications";
 import { cn } from "~/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
@@ -29,6 +33,8 @@ interface NotificationItem {
 export function NotificationBell() {
   const { data: notifications = [], isLoading } = useNotificationHistory(20);
   const [open, setOpen] = useState(false);
+  const markAllAsRead = useMarkAllAsRead();
+  const markAsRead = useMarkAsRead();
 
   // Count unread notifications
   const unreadCount = notifications.filter(
@@ -78,9 +84,14 @@ export function NotificationBell() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 px-2 text-xs text-slate-500"
+              className="h-6 px-2 text-xs text-slate-500 hover:text-slate-700"
+              onClick={(e) => {
+                e.stopPropagation();
+                markAllAsRead.mutate();
+              }}
+              disabled={markAllAsRead.isPending}
             >
-              Mark all read
+              {markAllAsRead.isPending ? "Marking..." : "Mark all read"}
             </Button>
           )}
         </DropdownMenuLabel>

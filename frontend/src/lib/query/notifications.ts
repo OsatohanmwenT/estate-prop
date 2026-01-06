@@ -13,6 +13,7 @@ import { toast } from "sonner";
 export const notificationKeys = {
   all: ["notifications"] as const,
   history: () => [...notificationKeys.all, "history"] as const,
+  unreadCount: () => [...notificationKeys.all, "unreadCount"] as const,
 };
 
 /**
@@ -107,5 +108,55 @@ export function useNotificationHistory(limit = 50) {
     queryKey: notificationKeys.history(),
     queryFn: () => notificationService.getHistory(limit),
     staleTime: 30 * 1000,
+  });
+}
+
+/**
+ * Get unread notification count
+ */
+export function useUnreadCount() {
+  return useQuery({
+    queryKey: notificationKeys.unreadCount(),
+    queryFn: () => notificationService.getUnreadCount(),
+    staleTime: 10 * 1000, // Refresh every 10 seconds
+    refetchInterval: 30 * 1000, // Auto-refetch every 30 seconds
+  });
+}
+
+/**
+ * Mark all notifications as read
+ */
+export function useMarkAllAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => notificationService.markAllAsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.history() });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() });
+      toast.success("All notifications marked as read");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to mark as read: ${error.message}`);
+    },
+  });
+}
+
+/**
+ * Mark a single notification as read
+ */
+export function useMarkAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: string) =>
+      notificationService.markAsRead(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificationKeys.history() });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to mark as read: ${error.message}`);
+    },
   });
 }

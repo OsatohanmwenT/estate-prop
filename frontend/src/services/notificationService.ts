@@ -106,6 +106,33 @@ class NotificationService extends BaseService {
       {}
     );
   }
+
+  /**
+   * Get unread notification count
+   */
+  async getUnreadCount(): Promise<{ count: number }> {
+    return this.get<{ count: number }>("/unread-count");
+  }
+
+  /**
+   * Mark all notifications as read
+   */
+  async markAllAsRead(): Promise<{ success: boolean; count: number }> {
+    return this.post<{ success: boolean; count: number }, Record<string, never>>(
+      "/mark-all-read",
+      {}
+    );
+  }
+
+  /**
+   * Mark a single notification as read
+   */
+  async markAsRead(notificationId: string): Promise<{ success: boolean }> {
+    return this.post<{ success: boolean }, Record<string, never>>(
+      `/${notificationId}/read`,
+      {}
+    );
+  }
 }
 
 export const notificationService = new NotificationService();

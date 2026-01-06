@@ -39,7 +39,8 @@ export const createOwnerSchema = z.object({
   organizationId: z
     .string()
     .uuid("Organization ID must be a valid UUID")
-    .trim(),
+    .trim()
+    .optional(),
   managedBy: z.string().uuid("Manager ID must be a valid UUID").optional(),
 });
 

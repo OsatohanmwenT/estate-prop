@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { authenticate, authorize } from "../middlewares/auth.middleware";
 import {
   createOwner,
+  deleteOwner,
   getAllOwners,
   getOwnerById,
   updateOwner,
-  deleteOwner,
 } from "../controllers/owner.controller";
+import { authenticate, authorize } from "../middlewares/auth.middleware";
 import { validate } from "../utils/validate";
 import {
   createOwnerSchema,

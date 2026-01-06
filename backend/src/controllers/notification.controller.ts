@@ -127,7 +127,7 @@ export const sendBulkOverdueReminders = asyncHandler(
     }
 
     const recipients = overdueItems.map((item) => ({
-      email: item.phoneNumber, // Note: This should be email, check your data model
+      email: item.email,
       data: {
         tenantName: item.tenantName,
         propertyAddress: item.unitInfo,
