@@ -12,6 +12,7 @@ import {
   Settings,
   Users,
   Wallet,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -75,6 +76,11 @@ const NAV_GROUPS: NavGroup[] = [
         title: "Leases",
         url: "/leases",
         icon: FileBadge,
+      },
+      {
+        title: "Maintenance",
+        url: "/maintenance",
+        icon: Wrench,
       },
     ],
   },

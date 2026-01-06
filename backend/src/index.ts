@@ -13,6 +13,7 @@ import dashboardRouter from "./routes/dashboardRoute";
 import documentRouter from "./routes/documentRoute";
 import invoiceRouter from "./routes/invoiceRoute";
 import leaseRouter from "./routes/leaseRoute";
+import maintenanceRouter from "./routes/maintenanceRoute";
 import notificationRouter from "./routes/notificationRoute";
 import organizationRouter from "./routes/organizationRoute";
 import ownerRouter from "./routes/ownerRoute";
@@ -56,6 +57,7 @@ app.use("/api/v1/tenants", tenantRouter);
 app.use("/api/v1/leases", leaseRouter);
 app.use("/api/v1/invoices", invoiceRouter);
 app.use("/api/v1/documents", documentRouter);
+app.use("/api/v1/maintenance", maintenanceRouter);
 app.use("/api/v1/cron", cronRouter);
 
 app.get("/", (req: Request, res: Response) => {
@@ -73,6 +75,7 @@ app.get("/", (req: Request, res: Response) => {
       leases: "/api/v1/leases",
       invoices: "/api/v1/invoices",
       documents: "/api/v1/documents",
+      maintenance: "/api/v1/maintenance",
     },
   });
 });

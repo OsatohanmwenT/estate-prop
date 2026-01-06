@@ -67,6 +67,9 @@ export const maintenanceRequests = pgTable("maintenance_requests", {
   completedAt: timestamp("completed_at"),
   vendorNotes: text("vendor_notes"),
   managerNotes: text("manager_notes"),
+  receipts: text("receipts").array(), // Array of receipt file URLs
+  reminderDate: timestamp("reminder_date"),
+  reminderSent: timestamp("reminder_sent"),
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -74,7 +77,7 @@ export const maintenanceRequests = pgTable("maintenance_requests", {
 
 export const maintenanceRequestsRelations = relations(
   maintenanceRequests,
-  ({ one }) => ({
+  ({ one, many }) => ({
     property: one(properties, {
       fields: [maintenanceRequests.propertyId],
       references: [properties.id],
@@ -89,6 +92,38 @@ export const maintenanceRequestsRelations = relations(
     }),
     assignee: one(users, {
       fields: [maintenanceRequests.assignedTo],
+      references: [users.id],
+    }),
+    logs: many(maintenanceLogs),
+  })
+);
+
+// Maintenance Logs Table
+export const maintenanceLogs = pgTable("maintenance_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  maintenanceRequestId: uuid("maintenance_request_id")
+    .notNull()
+    .references(() => maintenanceRequests.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "restrict" }),
+  action: varchar("action", { length: 100 }).notNull(), // e.g., "status_changed", "assigned", "updated", "comment_added"
+  description: text("description").notNull(), // Detailed description of the action
+  previousValue: text("previous_value"), // Previous state (JSON or text)
+  newValue: text("new_value"), // New state (JSON or text)
+  notes: text("notes"), // Additional notes
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const maintenanceLogsRelations = relations(
+  maintenanceLogs,
+  ({ one }) => ({
+    maintenanceRequest: one(maintenanceRequests, {
+      fields: [maintenanceLogs.maintenanceRequestId],
+      references: [maintenanceRequests.id],
+    }),
+    user: one(users, {
+      fields: [maintenanceLogs.userId],
       references: [users.id],
     }),
   })

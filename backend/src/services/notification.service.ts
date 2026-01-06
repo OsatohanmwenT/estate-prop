@@ -251,7 +251,19 @@ class NotificationService {
       .select()
       .from(notifications)
       .where(eq(notifications.organizationId, organizationId))
-      .orderBy(notifications.createdAt)
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit);
+  }
+
+  /**
+   * Get notifications for a specific user
+   */
+  async getUserNotifications(userId: string, limit = 50) {
+    return db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
       .limit(limit);
   }
 

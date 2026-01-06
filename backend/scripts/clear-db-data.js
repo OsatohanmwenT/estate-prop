@@ -11,7 +11,7 @@ if (!DATABASE_URL) {
 
 (async () => {
   const client = new Client({ connectionString: DATABASE_URL });
-  
+
   try {
     await client.connect();
     console.log("🔌 Connected to database");
@@ -26,7 +26,7 @@ if (!DATABASE_URL) {
     `);
 
     const tables = result.rows.map((row) => row.tablename);
-    
+
     if (tables.length === 0) {
       console.log("ℹ️  No tables found to clear");
       await client.end();
@@ -37,19 +37,20 @@ if (!DATABASE_URL) {
     console.log(`📋 Found ${tables.length} tables to clear:`, tables);
 
     // Use TRUNCATE CASCADE to handle foreign key constraints automatically
-    const tableList = tables.map(t => `"${t}"`).join(", ");
-    
+    const tableList = tables.map((t) => `"${t}"`).join(", ");
+
     try {
-      await client.query(`TRUNCATE TABLE ${tableList} RESTART IDENTITY CASCADE;`);
+      await client.query(
+        `TRUNCATE TABLE ${tableList} RESTART IDENTITY CASCADE;`
+      );
       console.log(`\n✅ Successfully cleared all tables and reset sequences!`);
     } catch (err) {
       console.error("\n❌ Error clearing tables:", err.message);
       throw err;
     }
-    
+
     await client.end();
     console.log("👋 Disconnected from database");
-    
   } catch (err) {
     console.error("\n❌ Error:", err.message);
     try {

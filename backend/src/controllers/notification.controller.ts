@@ -252,3 +252,27 @@ export const getUnreadCount = asyncHandler(
     });
   }
 );
+
+/**
+ * @route GET /api/v1/notifications/user
+ * @desc Get notifications for the current user
+ * @access Protected
+ */
+export const getUserNotifications = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.id;
+    const limit = parseInt(req.query.limit as string) || 50;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const notifications = await notificationService.getUserNotifications(userId, limit);
+
+    res.json({
+      success: true,
+      count: notifications.length,
+      data: notifications,
+    });
+  }
+);

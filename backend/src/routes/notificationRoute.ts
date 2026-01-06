@@ -5,6 +5,7 @@ import {
   sendOverdueReminder,
   sendBulkOverdueReminders,
   getNotificationHistory,
+  getUserNotifications,
   retryNotification,
   markAsRead,
   markAllAsRead,
@@ -25,6 +26,7 @@ notificationRouter.post("/send-bulk-overdue", sendBulkOverdueReminders);
 
 // History and status
 notificationRouter.get("/history", getNotificationHistory);
+notificationRouter.get("/user", getUserNotifications);
 notificationRouter.get("/unread-count", getUnreadCount);
 
 // Mark as read
