@@ -87,19 +87,21 @@ export const createTenant = asyncHandler(
       } = req.body;
       const user = (req as any).user;
 
-      // Check if email already exists
-      const emailExists = await tenantService.checkTenantEmailExists(email);
-      if (emailExists) {
-        return res.status(400).json({
-          success: false,
-          message: "A tenant with this email already exists",
-        });
+      // Check if email already exists (only if provided)
+      if (email) {
+        const emailExists = await tenantService.checkTenantEmailExists(email);
+        if (emailExists) {
+          return res.status(400).json({
+            success: false,
+            message: "A tenant with this email already exists",
+          });
+        }
       }
 
       const newTenant = await tenantService.addTenant({
         fullName,
-        email,
-        phone,
+        email: email || undefined,
+        phone: phone || undefined,
         nokName,
         nokPhone,
         annualIncome,

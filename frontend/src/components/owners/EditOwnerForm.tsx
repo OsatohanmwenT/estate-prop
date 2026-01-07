@@ -4,15 +4,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Trash2, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -61,9 +61,9 @@ export function EditOwnerForm({
   const onFormSubmit = (data: FullOwnerData) => {
     onSubmit({
       fullName: data.fullName.trim(),
-      email: data.email.trim().toLowerCase(),
-      phone: data.phone.trim(),
-      address: data.address.trim(),
+      email: data.email?.trim().toLowerCase() || "",
+      phone: data.phone?.trim() || "",
+      address: data.address?.trim() || "",
       bankName: data.bankName?.trim() || undefined,
       accountNumber: data.accountNumber?.trim() || undefined,
       accountName: data.accountName?.trim() || undefined,

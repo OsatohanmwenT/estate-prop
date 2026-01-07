@@ -94,9 +94,9 @@ export const owners = pgTable(
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
     fullName: varchar("full_name", { length: 256 }).notNull(),
-    email: varchar("email", { length: 256 }).notNull(),
-    phone: varchar("phone", { length: 50 }).notNull(),
-    address: text("address").notNull(),
+    email: varchar("email", { length: 256 }),
+    phone: varchar("phone", { length: 50 }),
+    address: text("address"),
     bankName: varchar("bank_name", { length: 100 }),
     accountNumber: varchar("account_number", { length: 20 }),
     accountName: varchar("account_name", { length: 256 }),
@@ -127,8 +127,8 @@ export const tenants = pgTable(
       .references(() => organizations.id, { onDelete: "cascade" }),
 
     fullName: varchar("full_name", { length: 256 }).notNull(),
-    email: varchar("email", { length: 256 }).notNull(),
-    phone: varchar("phone", { length: 50 }).notNull(),
+    email: varchar("email", { length: 256 }),
+    phone: varchar("phone", { length: 50 }),
     nokName: varchar("nok_name", { length: 256 }),
     nokPhone: varchar("nok_phone", { length: 50 }),
     annualIncome: decimal("annual_income", { precision: 12, scale: 2 }),

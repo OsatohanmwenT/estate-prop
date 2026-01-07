@@ -1,7 +1,8 @@
 "use client";
 
+import { formatDistanceToNow } from "date-fns";
+import { AlertTriangle, Bell, Check, Mail } from "lucide-react";
 import { useState } from "react";
-import { Bell, Check, Mail, AlertTriangle, X } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -12,12 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import {
-  useNotificationHistory,
   useMarkAllAsRead,
   useMarkAsRead,
+  useNotificationHistory,
+  useUnreadCount,
 } from "~/lib/query/notifications";
 import { cn } from "~/lib/utils";
-import { formatDistanceToNow } from "date-fns";
 
 import { NotificationHistoryItem } from "~/services/notificationService";
 

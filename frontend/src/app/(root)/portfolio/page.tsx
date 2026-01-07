@@ -2,6 +2,7 @@ import { Building2, PlusCircleIcon, UploadIcon } from "lucide-react";
 import Link from "next/link";
 import PortfolioTabs from "~/components/portfolio/PortfolioTabs";
 import MaxContainer from "~/components/shared/MaxContainer";
+import { ImportDataButton } from "~/components/import/ImportDataButton";
 import { Button } from "~/components/ui/button";
 
 const PortfolioPage = () => {
@@ -21,13 +22,7 @@ const PortfolioPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              className="h-9 rounded-sm border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300"
-            >
-              <UploadIcon className="size-4 mr-2" strokeWidth={1.5} />
-              Import Data
-            </Button>
+            <ImportDataButton />{" "}
             <Link href="/properties/add">
               <Button className="h-9 rounded-sm bg-slate-900 text-white hover:bg-slate-800 shadow-none">
                 <PlusCircleIcon className="size-4 mr-2" strokeWidth={1.5} />

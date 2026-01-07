@@ -118,10 +118,10 @@ class NotificationService extends BaseService {
    * Mark all notifications as read
    */
   async markAllAsRead(): Promise<{ success: boolean; count: number }> {
-    return this.post<{ success: boolean; count: number }, Record<string, never>>(
-      "/mark-all-read",
-      {}
-    );
+    return this.post<
+      { success: boolean; count: number },
+      Record<string, never>
+    >("/mark-all-read", {});
   }
 
   /**

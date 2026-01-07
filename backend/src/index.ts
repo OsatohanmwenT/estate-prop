@@ -20,6 +20,7 @@ import ownerRouter from "./routes/ownerRoute";
 import propertyRouter from "./routes/propertyRoute";
 import tenantRouter from "./routes/tenantRoute";
 import unitRouter from "./routes/unitRoute";
+import importRouter from "./routes/importRoute";
 // import jobScheduler from "./services/job.scheduler"; // Using QStash instead
 
 dotenv.config();
@@ -58,6 +59,7 @@ app.use("/api/v1/leases", leaseRouter);
 app.use("/api/v1/invoices", invoiceRouter);
 app.use("/api/v1/documents", documentRouter);
 app.use("/api/v1/maintenance", maintenanceRouter);
+app.use("/api/v1/import", importRouter);
 app.use("/api/v1/cron", cronRouter);
 
 app.get("/", (req: Request, res: Response) => {

@@ -6,18 +6,18 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../database";
 import {
-    maintenanceLogs,
-    maintenanceRequests,
+  maintenanceLogs,
+  maintenanceRequests,
 } from "../database/schemas/maintenance";
 import { properties } from "../database/schemas/property";
 import { propertyUnits } from "../database/schemas/unit";
 import { users } from "../database/schemas/user";
 import type {
-    CreateMaintenanceLogDTO,
-    CreateMaintenanceRequestDTO,
-    MaintenanceLogDTO,
-    MaintenanceRequestFilters,
-    UpdateMaintenanceRequestDTO
+  CreateMaintenanceLogDTO,
+  CreateMaintenanceRequestDTO,
+  MaintenanceLogDTO,
+  MaintenanceRequestFilters,
+  UpdateMaintenanceRequestDTO,
 } from "../types/maintenance";
 import { logger } from "../utils/logger";
 
@@ -31,7 +31,9 @@ class MaintenanceService {
         .insert(maintenanceRequests)
         .values({
           ...data,
-          estimatedCost: data.estimatedCost ? data.estimatedCost.toString() : undefined,
+          estimatedCost: data.estimatedCost
+            ? data.estimatedCost.toString()
+            : undefined,
         })
         .returning();
 
@@ -80,8 +82,12 @@ class MaintenanceService {
         .update(maintenanceRequests)
         .set({
           ...updates,
-          estimatedCost: updates.estimatedCost ? updates.estimatedCost.toString() : undefined,
-          actualCost: updates.actualCost ? updates.actualCost.toString() : undefined,
+          estimatedCost: updates.estimatedCost
+            ? updates.estimatedCost.toString()
+            : undefined,
+          actualCost: updates.actualCost
+            ? updates.actualCost.toString()
+            : undefined,
           updatedAt: new Date(),
         })
         .where(eq(maintenanceRequests.id, id))
@@ -121,7 +127,10 @@ class MaintenanceService {
         });
       }
 
-      if (updates.actualCost && updates.actualCost.toString() !== current.actualCost) {
+      if (
+        updates.actualCost &&
+        updates.actualCost.toString() !== current.actualCost
+      ) {
         await this.createLog({
           maintenanceRequestId: id,
           userId,
@@ -293,7 +302,9 @@ class MaintenanceService {
   async createLog(data: CreateMaintenanceLogDTO): Promise<void> {
     try {
       await db.insert(maintenanceLogs).values(data);
-      logger.info(`📝 Maintenance log created for request: ${data.maintenanceRequestId}`);
+      logger.info(
+        `📝 Maintenance log created for request: ${data.maintenanceRequestId}`
+      );
     } catch (error) {
       logger.error("❌ Failed to create maintenance log:", error);
       throw error;
@@ -317,7 +328,9 @@ class MaintenanceService {
         notes: comment,
       });
 
-      logger.info(`💬 Comment added to maintenance request: ${maintenanceRequestId}`);
+      logger.info(
+        `💬 Comment added to maintenance request: ${maintenanceRequestId}`
+      );
       return true;
     } catch (error) {
       logger.error("❌ Failed to add comment:", error);
@@ -392,7 +405,8 @@ class MaintenanceService {
       const stats = {
         total: allRequests.length,
         pending: allRequests.filter((r) => r.status === "pending").length,
-        inProgress: allRequests.filter((r) => r.status === "in_progress").length,
+        inProgress: allRequests.filter((r) => r.status === "in_progress")
+          .length,
         completed: allRequests.filter((r) => r.status === "completed").length,
         cancelled: allRequests.filter((r) => r.status === "cancelled").length,
         totalCost: allRequests.reduce(
@@ -564,7 +578,11 @@ class MaintenanceService {
   /**
    * Add receipt to maintenance request
    */
-  async addReceipt(maintenanceRequestId: string, receiptUrl: string, userId: string) {
+  async addReceipt(
+    maintenanceRequestId: string,
+    receiptUrl: string,
+    userId: string
+  ) {
     try {
       const [current] = await db
         .select()
@@ -592,7 +610,9 @@ class MaintenanceService {
         newValue: receiptUrl,
       });
 
-      logger.info(`📄 Receipt added to maintenance request: ${maintenanceRequestId}`);
+      logger.info(
+        `📄 Receipt added to maintenance request: ${maintenanceRequestId}`
+      );
       return true;
     } catch (error) {
       logger.error("❌ Failed to add receipt:", error);

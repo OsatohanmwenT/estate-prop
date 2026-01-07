@@ -62,9 +62,9 @@ export default function AddOwnerPage() {
 
     createOwnerMutation.mutate({
       fullName: data.fullName.trim(),
-      email: data.email.trim().toLowerCase(),
-      phone: data.phone.trim(),
-      address: data.address.trim(),
+      email: data.email?.trim().toLowerCase() || "",
+      phone: data.phone?.trim() || "",
+      address: data.address?.trim() || "",
       bankName: data.bankName?.trim() || undefined,
       accountNumber: data.accountNumber?.trim() || undefined,
       accountName: data.accountName?.trim() || undefined,

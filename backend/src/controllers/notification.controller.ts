@@ -4,10 +4,10 @@
  */
 
 import { Request, Response } from "express";
-import { asyncHandler } from "../utils/asyncHandler";
-import { notificationService } from "../services/notification.service";
 import { emailService } from "../email";
 import dashboardService from "../services/dashboard.service";
+import { notificationService } from "../services/notification.service";
+import { asyncHandler } from "../utils/asyncHandler";
 
 /**
  * @route POST /api/v1/notifications/send-reminder

@@ -3,12 +3,12 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   notificationService,
-  SendReminderData,
   SendOverdueReminderData,
+  SendReminderData,
 } from "~/services/notificationService";
-import { toast } from "sonner";
 
 export const notificationKeys = {
   all: ["notifications"] as const,
@@ -133,7 +133,9 @@ export function useMarkAllAsRead() {
     mutationFn: () => notificationService.markAllAsRead(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.history() });
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() });
+      queryClient.invalidateQueries({
+        queryKey: notificationKeys.unreadCount(),
+      });
       toast.success("All notifications marked as read");
     },
     onError: (error: Error) => {
@@ -153,7 +155,9 @@ export function useMarkAsRead() {
       notificationService.markAsRead(notificationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.history() });
-      queryClient.invalidateQueries({ queryKey: notificationKeys.unreadCount() });
+      queryClient.invalidateQueries({
+        queryKey: notificationKeys.unreadCount(),
+      });
     },
     onError: (error: Error) => {
       toast.error(`Failed to mark as read: ${error.message}`);

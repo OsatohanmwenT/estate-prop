@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ownerService } from "~/services";
 import { toast } from "sonner";
@@ -15,13 +14,13 @@ import {
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Loader2 } from "lucide-react";
-import {
-  CreateOwnerDialogProps,
-  INITIAL_OWNER_FORM_DATA,
-} from "~/types/owner.types";
+import { CreateOwnerDialogProps } from "~/types/owner.types";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ownerFormSchema, OwnerFormData } from "~/schemas/owner";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 
 export function CreateOwnerDialog({
   open,
@@ -30,172 +29,156 @@ export function CreateOwnerDialog({
 }: CreateOwnerDialogProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [formData, setFormData] = useState(INITIAL_OWNER_FORM_DATA);
+
+  const form = useForm<OwnerFormData>({
+    resolver: zodResolver(ownerFormSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phone: "",
+      address: "",
+    },
+  });
 
   const createOwnerMutation = useMutation({
-    mutationFn: (data: typeof formData) => ownerService.createOwner(data),
+    mutationFn: (data: OwnerFormData) => {
+      // Clean up empty strings to undefined if backend prefers, OR sends as is since backend handles partials
+      return ownerService.createOwner({
+        fullName: data.fullName,
+        email: data.email || undefined,
+        phone: data.phone || undefined,
+        address: data.address || undefined,
+      });
+    },
     onSuccess: (data) => {
       toast.success("Owner created successfully");
       queryClient.invalidateQueries({ queryKey: ["owners"] });
       onSuccess?.(data.id);
       onOpenChange(false);
-      setFormData(INITIAL_OWNER_FORM_DATA);
+      form.reset();
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create owner");
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validate required fields
-    if (!formData.fullName.trim()) {
-      toast.error("Full name is required");
-      return;
-    }
-    if (formData.fullName.length < 2) {
-      toast.error("Full name must be at least 2 characters");
-      return;
-    }
-    if (formData.fullName.length > 256) {
-      toast.error("Full name must not exceed 256 characters");
-      return;
-    }
-    if (!formData.email.trim()) {
-      toast.error("Email is required");
-      return;
-    }
-    if (formData.email.length > 256) {
-      toast.error("Email must not exceed 256 characters");
-      return;
-    }
-    // Basic email validation
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-    if (!formData.phone.trim()) {
-      toast.error("Phone number is required");
-      return;
-    }
-    if (formData.phone.length < 10) {
-      toast.error("Phone number must be at least 10 characters");
-      return;
-    }
-    if (formData.phone.length > 50) {
-      toast.error("Phone number must not exceed 50 characters");
-      return;
-    }
-    if (!formData.address.trim()) {
-      toast.error("Address is required");
-      return;
-    }
-    if (formData.address.length < 5) {
-      toast.error("Address must be at least 5 characters");
-      return;
-    }
-    if (formData.address.length > 512) {
-      toast.error("Address must not exceed 512 characters");
-      return;
-    }
+  const onSubmit = (data: OwnerFormData) => {
     if (!user?.organizationId) {
       toast.error("Organization ID is missing. Please log in again.");
       return;
     }
+    createOwnerMutation.mutate(data);
+  };
 
-    createOwnerMutation.mutate({
-      fullName: formData.fullName.trim(),
-      email: formData.email.trim().toLowerCase(),
-      phone: formData.phone.trim(),
-      address: formData.address.trim(),
-    });
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      form.reset();
+    }
+    onOpenChange(isOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create New Owner</DialogTitle>
           <DialogDescription>
-            Add a new property owner to the system. All fields are required.
+            Add a new property owner. Only full name is required for quick
+            addition.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">
-                Full Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="fullName"
-                placeholder="John Doe"
-                value={formData.fullName}
-                onChange={(e) =>
-                  setFormData({ ...formData, fullName: e.target.value })
-                }
-                disabled={createOwnerMutation.isPending}
-                maxLength={256}
-              />
-              <p className="text-xs text-muted-foreground">
-                {formData.fullName.length}/256 characters
-              </p>
-            </div>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          {/* Full Name */}
+          <Controller
+            control={form.control}
+            name="fullName"
+            render={({ field, fieldState }) => (
+              <Field className="gap-2" data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="fullName">
+                  Full Name <span className="text-destructive">*</span>
+                </FieldLabel>
+                <Input
+                  id="fullName"
+                  placeholder="John Doe"
+                  {...field}
+                  aria-invalid={fieldState.invalid}
+                  disabled={createOwnerMutation.isPending}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
 
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                Email <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                disabled={createOwnerMutation.isPending}
-                maxLength={256}
-              />
-            </div>
+          {/* Email */}
+          <Controller
+            control={form.control}
+            name="email"
+            render={({ field, fieldState }) => (
+              <Field className="gap-2" data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  {...field}
+                  value={field.value || ""}
+                  aria-invalid={fieldState.invalid}
+                  disabled={createOwnerMutation.isPending}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">
-                Phone Number <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+234 xxx xxx xxxx"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                disabled={createOwnerMutation.isPending}
-                maxLength={50}
-              />
-            </div>
+          {/* Phone */}
+          <Controller
+            control={form.control}
+            name="phone"
+            render={({ field, fieldState }) => (
+              <Field className="gap-2" data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+234 xxx xxx xxxx"
+                  {...field}
+                  value={field.value || ""}
+                  aria-invalid={fieldState.invalid}
+                  disabled={createOwnerMutation.isPending}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
 
-            <div className="space-y-2">
-              <Label htmlFor="address">
-                Address <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="address"
-                placeholder="Enter full address"
-                value={formData.address}
-                onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
-                }
-                disabled={createOwnerMutation.isPending}
-                rows={3}
-                maxLength={512}
-              />
-              <p className="text-xs text-muted-foreground">
-                {formData.address.length}/512 characters
-              </p>
-            </div>
-          </div>
+          {/* Address */}
+          <Controller
+            control={form.control}
+            name="address"
+            render={({ field, fieldState }) => (
+              <Field className="gap-2" data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="address">Address</FieldLabel>
+                <Textarea
+                  id="address"
+                  placeholder="Enter full address"
+                  {...field}
+                  value={field.value || ""}
+                  rows={3}
+                  aria-invalid={fieldState.invalid}
+                  disabled={createOwnerMutation.isPending}
+                />
+                {fieldState.invalid && (
+                  <FieldError errors={[fieldState.error]} />
+                )}
+              </Field>
+            )}
+          />
 
           <DialogFooter>
             <Button

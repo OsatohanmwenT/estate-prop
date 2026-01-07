@@ -4,22 +4,22 @@
  */
 
 import { Router } from "express";
-import { authenticate } from "../middlewares/auth.middleware";
 import {
-  createMaintenanceRequest,
-  getMaintenanceRequests,
-  getMaintenanceRequestById,
-  updateMaintenanceRequest,
-  deleteMaintenanceRequest,
-  addComment,
-  addReceipt,
-  getMaintenanceLogs,
-  getMaintenanceStatistics,
-  getMaintenanceByProperty,
-  getMaintenanceByUnit,
-  getPendingReminders,
-  markReminderSent,
+    addComment,
+    addReceipt,
+    createMaintenanceRequest,
+    deleteMaintenanceRequest,
+    getMaintenanceByProperty,
+    getMaintenanceByUnit,
+    getMaintenanceLogs,
+    getMaintenanceRequestById,
+    getMaintenanceRequests,
+    getMaintenanceStatistics,
+    getPendingReminders,
+    markReminderSent,
+    updateMaintenanceRequest,
 } from "../controllers/maintenance.controller";
+import { authenticate } from "../middlewares/auth.middleware";
 
 const router: Router = Router();
 

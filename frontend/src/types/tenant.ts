@@ -18,9 +18,9 @@ export interface Owner {
 
 export interface CreateOwnerData {
   fullName: string;
-  email: string;
-  phone: string;
-  address: string;
+  email?: string;
+  phone?: string;
+  address?: string;
   bankName?: string;
   accountNumber?: string;
   accountName?: string;

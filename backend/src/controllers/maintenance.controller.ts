@@ -4,8 +4,8 @@
  */
 
 import { Request, Response } from "express";
-import { asyncHandler } from "../utils/asyncHandler";
 import { maintenanceService } from "../services/maintenance.service";
+import { asyncHandler } from "../utils/asyncHandler";
 
 /**
  * @route POST /api/v1/maintenance

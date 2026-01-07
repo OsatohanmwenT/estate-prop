@@ -16,9 +16,9 @@ export const createOwner = asyncHandler(async (req: Request, res: Response) => {
 
     const newOwner = await ownerService.createOwner({
       fullName,
-      email,
-      phone,
-      address,
+      email: email || undefined,
+      phone: phone || undefined,
+      address: address || undefined,
       organizationId: user.organizationId,
       managedBy: user.id,
     });

@@ -8,20 +8,20 @@ export const ownerFormSchema = z.object({
     .trim(),
   email: z
     .string()
-    .email("Invalid email format")
     .max(256, "Email must not exceed 256 characters")
-    .toLowerCase()
-    .trim(),
+    .email("Invalid email format")
+    .optional()
+    .or(z.literal("")),
   phone: z
     .string()
-    .min(7, "Phone number must be at least 7 characters")
-    .max(20, "Phone number must not exceed 20 characters")
-    .trim(),
+    .max(50, "Phone number must not exceed 50 characters")
+    .optional()
+    .or(z.literal("")),
   address: z
     .string()
-    .min(5, "Address must be at least 5 characters")
     .max(512, "Address must not exceed 512 characters")
-    .trim(),
+    .optional()
+    .or(z.literal("")),
 });
 
 export const bankDetailsSchema = z.object({

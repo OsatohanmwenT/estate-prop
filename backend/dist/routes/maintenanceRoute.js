@@ -1,0 +1,22 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const maintenance_controller_1 = require("../controllers/maintenance.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate);
+router.get("/statistics", maintenance_controller_1.getMaintenanceStatistics);
+router.get("/reminders/pending", maintenance_controller_1.getPendingReminders);
+router.get("/property/:propertyId", maintenance_controller_1.getMaintenanceByProperty);
+router.get("/unit/:unitId", maintenance_controller_1.getMaintenanceByUnit);
+router.post("/", maintenance_controller_1.createMaintenanceRequest);
+router.get("/", maintenance_controller_1.getMaintenanceRequests);
+router.get("/:id", maintenance_controller_1.getMaintenanceRequestById);
+router.patch("/:id", maintenance_controller_1.updateMaintenanceRequest);
+router.delete("/:id", maintenance_controller_1.deleteMaintenanceRequest);
+router.post("/:id/comments", maintenance_controller_1.addComment);
+router.post("/:id/receipt", maintenance_controller_1.addReceipt);
+router.post("/:id/reminder/send", maintenance_controller_1.markReminderSent);
+router.get("/:id/logs", maintenance_controller_1.getMaintenanceLogs);
+exports.default = router;
+//# sourceMappingURL=maintenanceRoute.js.map
