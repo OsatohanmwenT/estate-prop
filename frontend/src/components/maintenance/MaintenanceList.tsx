@@ -11,6 +11,7 @@ import {
   User,
   Building,
   Calendar,
+  Receipt,
 } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -18,6 +19,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import {
@@ -28,9 +30,14 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { useMaintenanceRequests } from "~/lib/query/maintenance";
+import {
+  useMaintenanceRequests,
+  useDeleteMaintenance,
+} from "~/lib/query/maintenance";
 import { cn } from "~/lib/utils";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { UpdateExpenseDialog } from "./UpdateExpenseDialog";
+import { MaintenanceRequest } from "~/types/maintenance";
 
 interface MaintenanceListProps {
   filters?: {
@@ -42,6 +49,21 @@ interface MaintenanceListProps {
 
 export function MaintenanceList({ filters }: MaintenanceListProps) {
   const { data: requests = [], isLoading } = useMaintenanceRequests(filters);
+  const deleteMutation = useDeleteMaintenance();
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] =
+    useState<MaintenanceRequest | null>(null);
+
+  const handleAddExpense = (request: MaintenanceRequest) => {
+    setSelectedRequest(request);
+    setExpenseDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this maintenance request?")) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -100,6 +122,7 @@ export function MaintenanceList({ filters }: MaintenanceListProps) {
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case "high":
+      case "urgent":
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       case "medium":
         return <AlertCircle className="h-4 w-4 text-amber-500" />;
@@ -108,105 +131,127 @@ export function MaintenanceList({ filters }: MaintenanceListProps) {
     }
   };
 
+  const formatCurrency = (amount: string | null) => {
+    if (!amount || amount === "0") return "-";
+    return `₦${Number(amount).toLocaleString()}`;
+  };
+
   return (
-    <div className="border rounded-lg bg-white overflow-hidden shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-slate-50 hover:bg-slate-50">
-            <TableHead className="w-[300px]">Request</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Assignee</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {requests.map((request: any) => (
-            <TableRow key={request.id} className="group hover:bg-slate-50/50">
-              <TableCell>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    {getPriorityIcon(request.priority)}
-                    <span
-                      className="font-medium text-slate-900 truncate max-w-[200px]"
-                      title={request.title}
-                    >
-                      {request.title}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 flex items-center gap-2">
-                    <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 uppercase tracking-wider text-[10px]">
-                      {request.type.replace("_", " ")}
-                    </span>
-                    <span className="truncate max-w-[200px] opacity-75">
-                      {request.description}
-                    </span>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1 text-xs font-medium text-slate-700">
-                    <Building className="h-3 w-3 text-slate-400" />
-                    {request.property?.name || "Unknown Property"}
-                  </div>
-                  {request.unit && (
-                    <span className="text-[11px] text-slate-500 ml-4">
-                      Unit {request.unit.unitNumber}
-                    </span>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>{getStatusBadge(request.status)}</TableCell>
-              <TableCell>
-                {request.assignedTo ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="text-[10px] bg-blue-50 text-blue-600">
-                        {request.assignedTo?.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-slate-600">Assigned</span>
-                  </div>
-                ) : (
-                  <span className="text-xs text-slate-400 italic">
-                    Unassigned
-                  </span>
-                )}
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                  <Calendar className="h-3 w-3 text-slate-400" />
-                  {formatDistanceToNow(new Date(request.createdAt), {
-                    addSuffix: true,
-                  })}
-                </div>
-              </TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-slate-400 hover:text-slate-600"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View Details</DropdownMenuItem>
-                    <DropdownMenuItem>Edit Request</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+    <>
+      <div className="border rounded-lg bg-white overflow-hidden shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead className="w-[280px]">Request</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Cost</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {requests.map((request: any) => (
+              <TableRow key={request.id} className="group hover:bg-slate-50/50">
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      {getPriorityIcon(request.priority)}
+                      <span
+                        className="font-medium text-slate-900 truncate max-w-[200px]"
+                        title={request.title}
+                      >
+                        {request.title}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 flex items-center gap-2">
+                      <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 uppercase tracking-wider text-[10px]">
+                        {request.type.replace("_", " ")}
+                      </span>
+                      <span className="truncate max-w-[180px] opacity-75">
+                        {request.description}
+                      </span>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1 text-xs font-medium text-slate-700">
+                      <Building className="h-3 w-3 text-slate-400" />
+                      {request.property?.name || "Unknown Property"}
+                    </div>
+                    {request.unit && (
+                      <span className="text-[11px] text-slate-500 ml-4">
+                        Unit {request.unit.unitNumber || request.unit.code}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>{getStatusBadge(request.status)}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    {request.actualCost && Number(request.actualCost) > 0 ? (
+                      <span className="text-sm font-medium text-slate-900">
+                        {formatCurrency(request.actualCost)}
+                      </span>
+                    ) : request.estimatedCost &&
+                      Number(request.estimatedCost) > 0 ? (
+                      <span className="text-xs text-slate-500">
+                        Est: {formatCurrency(request.estimatedCost)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-400">-</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <Calendar className="h-3 w-3 text-slate-400" />
+                    {formatDistanceToNow(new Date(request.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-slate-400 hover:text-slate-600"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleAddExpense(request)}
+                      >
+                        <Receipt className="h-4 w-4 mr-2" />
+                        Record Expense
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => handleDelete(request.id)}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Expense Dialog */}
+      <UpdateExpenseDialog
+        open={expenseDialogOpen}
+        onOpenChange={setExpenseDialogOpen}
+        request={selectedRequest}
+      />
+    </>
   );
 }

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Wrench, Filter } from "lucide-react";
-import Link from "next/link";
+import { Plus, Wrench } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import MaxContainer from "~/components/shared/MaxContainer";
 import { MaintenanceStats } from "~/components/maintenance/MaintenanceStats";
 import { MaintenanceList } from "~/components/maintenance/MaintenanceList";
+import { CreateMaintenanceDialog } from "~/components/maintenance/CreateMaintenanceDialog";
 import {
   Select,
   SelectContent,
@@ -14,11 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Input } from "~/components/ui/input";
 
 export default function MaintenancePage() {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   return (
     <div className="">
@@ -36,7 +36,10 @@ export default function MaintenancePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button className="h-9 rounded-sm bg-slate-900 text-white hover:bg-slate-800 shadow-none">
+            <Button
+              className="h-9 rounded-sm bg-slate-900 text-white hover:bg-slate-800 shadow-none"
+              onClick={() => setDialogOpen(true)}
+            >
               <Plus className="size-4 mr-2" strokeWidth={1.5} />
               Report Issue
             </Button>
@@ -75,7 +78,6 @@ export default function MaintenancePage() {
               </SelectContent>
             </Select>
           </div>
-          {/* Search could go here */}
         </div>
 
         {/* List */}
@@ -86,6 +88,9 @@ export default function MaintenancePage() {
           }}
         />
       </MaxContainer>
+
+      {/* Create Dialog */}
+      <CreateMaintenanceDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 }
